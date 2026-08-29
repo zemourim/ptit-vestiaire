@@ -11,6 +11,10 @@ body {
   background: #f8fafc;
 }
 
+.mobile-nav {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}
+
 button,
 input,
 select,

@@ -66,8 +66,8 @@ export function App() {
         {activeTab === 'reglages' && <Reglages userEmail={auth.user.email ?? ''} />}
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 px-2 py-2 backdrop-blur md:hidden">
-        <div className="grid grid-cols-4 gap-1">
+      <nav className="mobile-nav fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 px-2 pt-2 backdrop-blur md:hidden">
+        <div className="grid h-16 grid-cols-4 gap-1">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const selected = activeTab === tab.id;

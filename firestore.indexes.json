@@ -4,6 +4,14 @@
       "collectionGroup": "sorties",
       "queryScope": "COLLECTION",
       "fields": [
+        { "fieldPath": "statut", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "sorties",
+      "queryScope": "COLLECTION",
+      "fields": [
         { "fieldPath": "fille", "order": "ASCENDING" },
         { "fieldPath": "statut", "order": "ASCENDING" },
         { "fieldPath": "date", "order": "ASCENDING" }
