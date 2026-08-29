@@ -26,7 +26,11 @@ export function useSettings() {
         setError(null);
       },
       (caught) => {
-        setError(caught.message || 'Impossible de charger les réglages.');
+        setError(
+          caught.code === 'permission-denied'
+            ? 'Accès aux réglages Firestore refusé. Publie firestore.rules dans le bon projet Firebase.'
+            : caught.message || 'Impossible de charger les réglages.'
+        );
         setLoading(false);
       }
     );

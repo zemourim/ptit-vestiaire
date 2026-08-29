@@ -47,7 +47,11 @@ export function useSorties(filters: SortieFilters = {}) {
         setError(null);
       },
       (caught) => {
-        setError(caught.message || 'Impossible de charger les sorties.');
+        setError(
+          caught.code === 'permission-denied'
+            ? 'Accès Firestore refusé. Publie firestore.rules dans le projet Firebase utilisé par Vercel.'
+            : caught.message || 'Impossible de charger les sorties.'
+        );
         setLoading(false);
       }
     );

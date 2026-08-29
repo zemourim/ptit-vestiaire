@@ -151,6 +151,15 @@ npm run build
 firebase deploy --only hosting
 ```
 
+Après avoir activé Firebase CLI, publie aussi les règles si l'application affiche `Missing or insufficient permissions` :
+
+```bash
+firebase login
+firebase deploy --only firestore:rules,storage
+```
+
+Cette commande ne modifie pas les données Firestore ni les fichiers Storage ; elle publie uniquement les règles de sécurité présentes dans `firestore.rules` et `storage.rules`.
+
 Commande raccourcie équivalente :
 
 ```bash
