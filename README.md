@@ -127,27 +127,37 @@ firebase functions:secrets:set ANTHROPIC_API_KEY
 
 Puis adapte le déploiement si Firebase te demande de lier ce secret. Selon l'état actuel des offres Firebase, Cloud Functions peut demander un projet avec facturation activée même si l'usage reste très faible. Le mode manuel reste compatible avec le plan gratuit Spark.
 
-## Déploiement Firebase
+## Déploiement
 
-Connecte Firebase CLI :
+Installe Node.js 20 ou plus, puis installe Firebase CLI si la commande `firebase` n'est pas disponible :
 
 ```bash
-npx firebase login
-npx firebase use --add
+npm install -g firebase-tools
 ```
 
-Déploie les règles, l'hébergement et, si disponible, les functions :
+Connecte-toi à Firebase et lie ce dossier au projet Firebase existant utilisé pour Authentication, Firestore et Storage :
+
+```bash
+firebase login
+firebase use --add
+```
+
+La configuration Hosting est déjà prête dans `firebase.json` : le dossier public est `dist`, et le mode single-page application redirige toutes les routes vers `index.html`.
+
+Pour builder puis déployer uniquement le frontend sur Firebase Hosting :
 
 ```bash
 npm run build
-npx firebase deploy
+firebase deploy --only hosting
 ```
 
-Pour déployer seulement l'hébergement :
+Commande raccourcie équivalente :
 
 ```bash
-npx firebase deploy --only hosting,firestore:rules,storage
+npm run deploy
 ```
+
+Le manifeste PWA est généré par `vite-plugin-pwa` pendant `npm run build` avec le nom `PtitVestiaire` et le short name `PtitVestiaire`. Vérifie le build avec `npm run preview`, puis ouvre `/manifest.json` dans le navigateur.
 
 Firebase Hosting fournit HTTPS automatiquement, nécessaire pour l'accès caméra sur smartphone.
 

@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "firebase:emulators": "firebase emulators:start",
-    "deploy": "npm run build && firebase deploy"
+    "deploy": "npm run build && firebase deploy --only hosting"
   },
   "dependencies": {
     "firebase": "latest",
