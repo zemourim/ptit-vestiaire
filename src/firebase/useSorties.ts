@@ -78,9 +78,10 @@ export async function markSortieReturned(sortieId: string) {
 
 export async function markManyReturned(sortieIds: string[]) {
   if (!db) throw new Error('Firebase n’est pas configuré.');
-  const batch = writeBatch(db);
+  const firestore = db;
+  const batch = writeBatch(firestore);
   sortieIds.forEach((sortieId) => {
-    batch.update(doc(db, 'sorties', sortieId), {
+    batch.update(doc(firestore, 'sorties', sortieId), {
       statut: 'revenu',
       dateRetour: Timestamp.now()
     });
