@@ -65,6 +65,7 @@ Document `settings/global` :
 - Connexion Firebase Authentication par email/mot de passe.
 - Limitation côté interface à deux emails adultes via `VITE_ALLOWED_EMAILS`.
 - Ajout d'une sortie du matin avec photo, prénom, date automatique et tags modifiables.
+- Compression automatique de la photo dans le navigateur avant tout envoi vers Firebase Storage.
 - Analyse des vêtements par Cloud Function `analyzeVetements` et API Anthropic Claude Vision.
 - Les suggestions sont modifiables, supprimables et complétables manuellement avant l'enregistrement.
 - Tableau de bord des vêtements encore `sorti`, triés du plus ancien au plus récent.
@@ -112,6 +113,40 @@ VITE_FIREBASE_MESSAGING_SENDER_ID=...
 VITE_FIREBASE_APP_ID=...
 VITE_ALLOWED_EMAILS=ton.email@example.com,email.femme@example.com
 ```
+
+## Compression des photos avant l'upload
+
+Une photo prise avec un smartphone récent pèse souvent 3 à 6 Mo. À raison de deux sorties par jour, le quota gratuit de Firebase Storage (5 Go) serait consommé en quelques mois, avec un risque de facturation à la clé. Pour éviter cela, chaque photo est compressée **dans le navigateur**, juste après la prise de vue et **avant** l'envoi vers Firebase Storage.
+
+La compression est faite par la librairie [`browser-image-compression`](https://www.npmjs.com/package/browser-image-compression), entièrement côté client, sans service externe ni coût. Le code se trouve dans `compresserPhoto` ([src/lib/images.ts](src/lib/images.ts)) et est appelé par [src/components/PriseDePhoto.tsx](src/components/PriseDePhoto.tsx).
+
+Paramètres appliqués :
+
+| Paramètre | Valeur | Raison |
+| --- | --- | --- |
+| Poids visé | environ 200 à 300 Ko | Divise le stockage par 10 à 20 par rapport à l'original |
+| Dimension max | 1280 px sur le plus grand côté | Largement suffisant pour identifier un vêtement |
+| Format | JPEG, qualité ~78 % | Format universel, bon rapport poids/lisibilité |
+| Exécution | Web Worker | L'interface reste fluide pendant la compression |
+
+Pendant les quelques centaines de millisecondes que dure l'opération, la zone photo affiche un indicateur « Optimisation de la photo… » et le champ de sélection est désactivé. Une fois terminée, l'aperçu et le poids final en Ko sont affichés.
+
+Seule l'image compressée circule ensuite dans l'application :
+
+- elle est envoyée à Firebase Storage par `uploadSortiePhoto` ;
+- elle sert aussi de base à l'analyse IA (le data URL transmis à la Cloud Function est celui de l'image compressée).
+
+L'original en pleine résolution n'est jamais envoyé. Si la compression échoue, l'application affiche une erreur et n'enregistre rien plutôt que de basculer sur l'image d'origine.
+
+### Lisibilité conservée
+
+1280 px et une qualité de 78 % restent confortablement au-dessus de ce dont Claude Vision a besoin : Anthropic redimensionne de toute façon les images au-delà de ~1568 px, donc une photo plus lourde n'améliorerait pas la reconnaissance des vêtements — elle coûterait juste plus cher en stockage et en tokens. Côté affichage, le tableau de bord et l'historique montrent les photos en vignette ou en largeur d'écran mobile, où 1280 px reste net y compris sur un écran haute densité.
+
+Pour vérifier concrètement : prends une photo depuis l'application, regarde le poids affiché sous l'aperçu (il doit tourner autour de 200 à 300 Ko), lance « Analyser » et contrôle que les vêtements proposés sont corrects.
+
+## Surveillance du budget Google Cloud
+
+La compression réduit fortement le risque de dépassement, mais elle ne le supprime pas totalement. Pour être averti par email si le projet venait à générer le moindre coût, configure une alerte de budget : la marche à suivre détaillée est dans [BILLING.md](BILLING.md).
 
 ## Reconnaissance des vêtements par Claude Vision
 
