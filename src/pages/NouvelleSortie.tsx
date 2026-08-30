@@ -34,8 +34,8 @@ export function NouvelleSortie({ userId, onCreated }: Props) {
     setVetements((current) => current.filter((item) => item !== tag));
   }
 
-  async function handleAnalyze(dataUrl = photoDataUrl) {
-    if (!dataUrl) {
+  async function handleAnalyze() {
+    if (!photoDataUrl) {
       setError('Ajoute une photo avant de lancer l’analyse.');
       return;
     }
@@ -43,11 +43,11 @@ export function NouvelleSortie({ userId, onCreated }: Props) {
     setAnalyzing(true);
     setError(null);
     try {
-      const suggestions = await analyzePhoto(dataUrl);
+      const suggestions = await analyzePhoto(photoDataUrl);
       setVetements((current) => Array.from(new Set([...current, ...suggestions.map((item) => item.toLowerCase())])));
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : '';
-      setError(message || 'Analyse locale indisponible. Tu peux saisir les vêtements à la main.');
+      setError(message || 'Analyse IA indisponible. Tu peux saisir les vêtements à la main.');
     } finally {
       setAnalyzing(false);
     }
@@ -91,17 +91,13 @@ export function NouvelleSortie({ userId, onCreated }: Props) {
       </section>
 
       <SelecteurFille value={fille} onChange={setFille} />
-      <PriseDePhoto file={photo} onFileChange={(file, dataUrl) => {
-        setPhoto(file);
-        setPhotoDataUrl(dataUrl);
-        if (dataUrl) void handleAnalyze(dataUrl);
-      }} />
+      <PriseDePhoto file={photo} onFileChange={(file, dataUrl) => { setPhoto(file); setPhotoDataUrl(dataUrl); }} />
 
       <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-lg font-black">Vêtements visibles</h3>
-            <p className="text-sm font-bold text-slate-500">Des suggestions locales, que tu peux modifier ou compléter.</p>
+            <p className="text-sm font-bold text-slate-500">L’IA peut proposer une liste, tu gardes la main.</p>
           </div>
           <button
             type="button"
@@ -109,7 +105,7 @@ export function NouvelleSortie({ userId, onCreated }: Props) {
             disabled={!photoDataUrl || analyzing}
             className="inline-flex items-center gap-2 rounded-full bg-cyan-100 px-4 py-2 text-sm font-black text-cyan-800 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
           >
-            <Sparkles size={16} /> {analyzing ? 'Détection...' : 'Détecter'}
+            <Sparkles size={16} /> {analyzing ? 'Analyse...' : 'Analyser'}
           </button>
         </div>
 

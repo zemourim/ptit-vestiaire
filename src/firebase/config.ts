@@ -1,6 +1,7 @@
 import { initializeApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
+import { getFunctions, type Functions } from 'firebase/functions';
 import { getStorage, type FirebaseStorage } from 'firebase/storage';
 
 const firebaseConfig = {
@@ -18,6 +19,7 @@ export const app: FirebaseApp | null = hasFirebaseConfig ? initializeApp(firebas
 export const auth: Auth | null = app ? getAuth(app) : null;
 export const db: Firestore | null = app ? getFirestore(app) : null;
 export const storage: FirebaseStorage | null = app ? getStorage(app) : null;
+export const cloudFunctions: Functions | null = app ? getFunctions(app, 'europe-west1') : null;
 
 export const allowedAdultEmails = String(import.meta.env.VITE_ALLOWED_EMAILS ?? '')
   .split(',')

@@ -65,8 +65,8 @@ Document `settings/global` :
 - Connexion Firebase Authentication par email/mot de passe.
 - Limitation côté interface à deux emails adultes via `VITE_ALLOWED_EMAILS`.
 - Ajout d'une sortie du matin avec photo, prénom, date automatique et tags modifiables.
-- Suggestions de vêtements par détection locale COCO-SSD dans le navigateur.
-- Aucun appel à une API d'analyse, aucune clé API et aucun coût à l'usage pour la reconnaissance.
+- Analyse des vêtements par Cloud Function `analyzeVetements` et API Anthropic Claude Vision.
+- Les suggestions sont modifiables, supprimables et complétables manuellement avant l'enregistrement.
 - Tableau de bord des vêtements encore `sorti`, triés du plus ancien au plus récent.
 - Badge rouge si une sortie dépasse le seuil configurable, par défaut 7 jours.
 - Historique filtrable par Sanaa, Manelle ou toutes les sorties.
@@ -113,13 +113,25 @@ VITE_FIREBASE_APP_ID=...
 VITE_ALLOWED_EMAILS=ton.email@example.com,email.femme@example.com
 ```
 
-## Reconnaissance locale des vêtements
+## Reconnaissance des vêtements par Claude Vision
 
-Quand une photo est choisie, l'application charge une seule fois le modèle pré-entraîné COCO-SSD via TensorFlow.js, puis exécute la détection entièrement dans le navigateur. Le modèle est mis en cache par le navigateur et aucune photo n'est envoyée à un service d'analyse tiers.
+Quand une photo est analysée, le navigateur appelle la Cloud Function `analyzeVetements`. La Function envoie l'image à Anthropic avec le modèle `claude-haiku-4-5-20251001` et demande un tableau JSON de vêtements et accessoires visibles, par exemple `["manteau bleu", "baskets blanches"]`. La clé API n'est jamais envoyée au navigateur : elle est conservée dans Firebase Secret Manager et l'accès est limité à la Function.
 
-La détection propose uniquement les catégories accessoires disponibles dans COCO-SSD et pertinentes pour le vestiaire, comme les sacs, les valises et les cravates. Les suggestions sont modifiables, supprimables ou complétables manuellement. Si aucun objet pertinent n'est trouvé, le champ reste vide et l'enregistrement manuel reste disponible.
+Pour créer une clé, utilise [console.anthropic.com](https://console.anthropic.com/), puis configure-la côté serveur :
 
-Cette fonctionnalité ne nécessite aucune clé API, aucun compte auprès d'un fournisseur d'IA et aucune facturation à l'usage.
+```bash
+cd functions
+npm install
+npx firebase functions:secrets:set ANTHROPIC_API_KEY
+```
+
+Déploie ensuite la Function avec son secret :
+
+```bash
+npx firebase deploy --only functions:analyzeVetements
+```
+
+Le compte Anthropic doit disposer de crédits. Pour un usage familial normal avec Haiku, le coût estimé reste de quelques centimes par mois, selon le nombre et la taille des photos analysées. Configure une alerte et un plafond de dépense dans [console.anthropic.com](https://console.anthropic.com/) afin d'éviter toute mauvaise surprise.
 
 ## Déploiement
 
