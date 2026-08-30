@@ -118,7 +118,7 @@ Si un doublon passe malgré tout, Réglages → « Fusionner deux vêtements en 
 
 ### Changement rapide de statut depuis la garde-robe
 
-L'onglet **Garde-robe** liste tout le catalogue par fille, avec pour chaque vêtement son statut et depuis combien de jours il y est. Chaque carte porte un bouton unique dont le libellé suit le statut courant : « Marquer rentré » si le vêtement est sorti, « Marquer ressorti » sinon.
+L'onglet **Garde-robe** liste tout le catalogue par fille, avec pour chaque vêtement son statut et depuis combien de jours il y est. Chaque carte porte un bouton unique dont le libellé suit le statut courant : « Marquer rentré » si le vêtement est sorti, « Marquer ressorti » sinon. L'onglet **Aperçu** présente les vêtements actuellement sortis.
 
 Un clic sur ce bouton, sans photo ni formulaire :
 
@@ -139,7 +139,7 @@ Ces écritures partent dans un seul batch Firestore : le catalogue ne peut jamai
 - Les suggestions sont modifiables, supprimables et complétables manuellement avant l'enregistrement.
 - Catalogue permanent de vêtements : un vêtement n'est créé qu'une fois, puis réutilisé à chaque sortie.
 - Rapprochement automatique des noms pour éviter les doublons, avec confirmation manuelle en cas de doute.
-- Tableau de bord compact des vêtements encore `sorti`, avec vignettes, date de sortie et retour rapide, trié du plus ancien au plus récent.
+- Onglet Aperçu compact des vêtements encore `sorti`, avec vignettes, date de sortie et retour rapide, trié du plus ancien au plus récent.
 - Historique complet par vêtement : toutes ses sorties et tous ses retours, avec l'origine de chaque changement.
 - Onglet Garde-robe listant le catalogue par fille, avec bouton de changement de statut en un clic.
 - Suppression confirmée d'un vêtement du catalogue. Les mouvements liés sont conservés : le journal familial reste complet et les désigne comme « Vêtement supprimé ».

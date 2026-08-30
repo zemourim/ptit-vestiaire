@@ -48,8 +48,8 @@ export function TableauDeBord() {
   return (
     <section className="space-y-5">
       <div>
-        <p className="text-sm font-black uppercase tracking-[0.22em] text-slate-500">Tableau de bord</p>
-        <h2 className="mt-1 text-3xl font-black">Vêtements encore sortis</h2>
+        <p className="text-sm font-black uppercase tracking-[0.22em] text-slate-500">Aperçu</p>
+        <h2 className="mt-1 text-3xl font-black">Aperçu des vêtements</h2>
         <p className="mt-1 font-bold text-slate-500">Du plus ancien au plus récent. Marque un vêtement rentré directement depuis sa vignette.</p>
       </div>
 

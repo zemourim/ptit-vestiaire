@@ -1,4 +1,4 @@
-import { Archive, LayoutGrid, LogOut, PlusCircle, Settings, Shirt } from 'lucide-react';
+import { Archive, LogOut, PlusCircle, Settings, Shirt, Sparkles } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Connexion } from './pages/Connexion';
 import { GardeRobe } from './pages/GardeRobe';
@@ -12,8 +12,8 @@ import { useAuth } from './firebase/useAuth';
 type Tab = 'dashboard' | 'garderobe' | 'nouvelle' | 'historique' | 'reglages';
 
 const tabs: Array<{ id: Tab; label: string; icon: typeof Shirt }> = [
-  { id: 'dashboard', label: 'Sortis', icon: Shirt },
-  { id: 'garderobe', label: 'Garde-robe', icon: LayoutGrid },
+  { id: 'dashboard', label: 'Aperçu', icon: Sparkles },
+  { id: 'garderobe', label: 'Garde-robe', icon: Shirt },
   { id: 'nouvelle', label: 'Ajouter', icon: PlusCircle },
   { id: 'historique', label: 'Historique', icon: Archive },
   { id: 'reglages', label: 'Réglages', icon: Settings }
@@ -126,4 +126,3 @@ function CenteredMessage({ title, message }: { title: string; message: string })
     </main>
   );
 }
-
