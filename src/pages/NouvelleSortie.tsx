@@ -1,4 +1,5 @@
 import { Sparkles, X } from 'lucide-react';
+import { FirebaseError } from 'firebase/app';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
 import { PriseDePhoto } from '../components/PriseDePhoto';
@@ -46,8 +47,11 @@ export function NouvelleSortie({ userId, onCreated }: Props) {
       const suggestions = await analyzePhoto(photoDataUrl);
       setVetements((current) => Array.from(new Set([...current, ...suggestions.map((item) => item.toLowerCase())])));
     } catch (caught) {
-      const message = caught instanceof Error ? caught.message : '';
-      setError(message || 'Analyse IA indisponible. Tu peux saisir les vêtements à la main.');
+      if (caught instanceof FirebaseError) {
+        setError(`Analyse impossible (${caught.code}) : ${caught.message}`);
+      } else {
+        setError(caught instanceof Error ? caught.message : 'Analyse IA indisponible. Tu peux saisir les vêtements à la main.');
+      }
     } finally {
       setAnalyzing(false);
     }
