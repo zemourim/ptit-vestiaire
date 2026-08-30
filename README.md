@@ -75,7 +75,7 @@ Document `settings/global` :
 
 ## Installation locale
 
-Installe Node.js 20 ou plus, puis lance :
+Installe Node.js 22 ou plus, puis lance :
 
 ```bash
 npm install
