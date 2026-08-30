@@ -45,8 +45,9 @@ export function NouvelleSortie({ userId, onCreated }: Props) {
     try {
       const suggestions = await analyzePhoto(photoDataUrl);
       setVetements((current) => Array.from(new Set([...current, ...suggestions.map((item) => item.toLowerCase())])));
-    } catch {
-      setError('Analyse IA indisponible. Tu peux saisir les vêtements à la main.');
+    } catch (caught) {
+      const message = caught instanceof Error ? caught.message : '';
+      setError(message || 'Analyse IA indisponible. Tu peux saisir les vêtements à la main.');
     } finally {
       setAnalyzing(false);
     }

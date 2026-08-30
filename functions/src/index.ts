@@ -33,30 +33,39 @@ export const analyzeVetements = onCall<AnalyzeRequest>({ secrets: ['ANTHROPIC_AP
   }
 
   const anthropic = new Anthropic({ apiKey });
-  const response = await anthropic.messages.create({
-    model: 'claude-3-5-sonnet-latest',
-    max_tokens: 300,
-    temperature: 0,
-    messages: [
-      {
-        role: 'user',
-        content: [
-          {
-            type: 'image',
-            source: {
-              type: 'base64',
-              media_type: mimeType as (typeof acceptedMimeTypes)[number],
-              data: imageBase64
+  let response;
+  try {
+    response = await anthropic.messages.create({
+      model: 'claude-3-5-sonnet-latest',
+      max_tokens: 300,
+      temperature: 0,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: {
+                type: 'base64',
+                media_type: mimeType as (typeof acceptedMimeTypes)[number],
+                data: imageBase64
+              }
+            },
+            {
+              type: 'text',
+              text: 'Liste uniquement les vêtements visibles sur cette photo en français. Réponds avec un tableau JSON de chaînes courtes, sans phrase autour. Exemple: ["manteau bleu", "baskets blanches"]. Ignore le visage, le corps, le décor et les objets non portés.'
             }
-          },
-          {
-            type: 'text',
-            text: 'Liste uniquement les vêtements visibles sur cette photo en français. Réponds avec un tableau JSON de chaînes courtes, sans phrase autour. Exemple: ["manteau bleu", "baskets blanches"]. Ignore le visage, le corps, le décor et les objets non portés.'
-          }
-        ]
-      }
-    ]
-  });
+          ]
+        }
+      ]
+    });
+  } catch (caught) {
+    const message = caught instanceof Error ? caught.message : '';
+    if (message.toLowerCase().includes('credit balance') || message.toLowerCase().includes('billing')) {
+      throw new HttpsError('failed-precondition', 'Le crédit Anthropic est insuffisant. Ajoute des crédits sur console.anthropic.com.');
+    }
+    throw new HttpsError('unavailable', 'Le service d’analyse IA est temporairement indisponible.');
+  }
 
   const text = response.content.find((block) => block.type === 'text')?.text ?? '[]';
   const parsed = JSON.parse(text) as unknown;
