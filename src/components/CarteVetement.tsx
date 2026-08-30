@@ -1,64 +1,87 @@
-import { Check, Shirt } from 'lucide-react';
+import { Archive, ArchiveRestore, History, Loader2, LogIn, LogOut, Shirt } from 'lucide-react';
 import { BadgeStatut } from './BadgeStatut';
 import { daysSince, formatDate, isLate } from '../lib/dates';
 import { filleStyles } from '../lib/constants';
-import type { Sortie } from '../types';
+import type { Vetement } from '../types';
 
 type Props = {
-  sortie: Sortie;
+  vetement: Vetement;
   alertAfterDays: number;
-  selected?: boolean;
-  onSelectedChange?: (checked: boolean) => void;
-  onMarkReturned?: () => void;
+  busy?: boolean;
+  onToggleStatut?: () => void;
+  onVoirHistorique?: () => void;
+  onToggleActif?: () => void;
 };
 
-export function CarteVetement({ sortie, alertAfterDays, selected, onSelectedChange, onMarkReturned }: Props) {
-  const late = sortie.statut === 'sorti' && isLate(sortie.date, alertAfterDays);
+export function CarteVetement({ vetement, alertAfterDays, busy, onToggleStatut, onVoirHistorique, onToggleActif }: Props) {
+  const sorti = vetement.statutActuel === 'sorti';
+  const jours = vetement.dateDernierMouvement ? daysSince(vetement.dateDernierMouvement) : null;
+  const late = sorti && vetement.dateDernierMouvement ? isLate(vetement.dateDernierMouvement, alertAfterDays) : false;
 
   return (
-    <article className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-      <img src={sortie.photoUrl} alt={`Tenue de ${sortie.fille}`} className="h-56 w-full object-cover" loading="lazy" />
-      <div className="space-y-4 p-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <p className={`text-xl font-black ${filleStyles[sortie.fille].text}`}>{sortie.fille}</p>
-            <p className="text-sm font-bold text-slate-500">{formatDate(sortie.date)} · il y a {daysSince(sortie.date)} j</p>
+    <article
+      className={`overflow-hidden rounded-3xl border bg-white shadow-sm transition ${
+        late ? 'border-rose-200' : 'border-slate-200'
+      } ${vetement.actif ? '' : 'opacity-60'}`}
+    >
+      {vetement.photoReference ? (
+        <img src={vetement.photoReference} alt={vetement.nom} className="h-44 w-full object-cover" loading="lazy" />
+      ) : (
+        <div className="grid h-44 w-full place-items-center bg-slate-100 text-slate-400">
+          <Shirt size={40} />
+        </div>
+      )}
+
+      <div className="space-y-3 p-4">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className="truncate text-lg font-black capitalize">{vetement.nom}</p>
+            <p className={`text-sm font-bold ${filleStyles[vetement.fille].text}`}>{vetement.fille}</p>
           </div>
-          <BadgeStatut sortie={sortie} late={late} />
+          <BadgeStatut statut={vetement.statutActuel} late={late} jours={jours} />
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {sortie.vetements.map((vetement) => (
-            <span key={vetement} className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-sm font-bold text-slate-700">
-              <Shirt size={15} /> {vetement}
-            </span>
-          ))}
-        </div>
+        <p className="text-sm font-bold text-slate-500">
+          {vetement.dateDernierMouvement
+            ? `${sorti ? 'Sorti' : 'Rentré'} le ${formatDate(vetement.dateDernierMouvement)}`
+            : 'Aucun mouvement enregistré'}
+          {!vetement.actif && ' · archivé'}
+        </p>
 
-        {sortie.statut === 'sorti' && (
-          <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
-            {onSelectedChange && (
-              <label className="flex items-center gap-2 text-sm font-bold text-slate-600">
-                <input
-                  type="checkbox"
-                  checked={selected}
-                  onChange={(event) => onSelectedChange(event.target.checked)}
-                  className="h-5 w-5 rounded border-slate-300"
-                />
-                Sélectionner
-              </label>
-            )}
-            {onMarkReturned && (
-              <button
-                type="button"
-                onClick={onMarkReturned}
-                className="ml-auto inline-flex items-center gap-2 rounded-full bg-slate-950 px-4 py-2 text-sm font-black text-white"
-              >
-                <Check size={16} /> Marquer revenu
-              </button>
-            )}
-          </div>
-        )}
+        <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
+          {onToggleStatut && (
+            <button
+              type="button"
+              onClick={onToggleStatut}
+              disabled={busy}
+              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-black text-white transition disabled:opacity-60 ${
+                sorti ? 'bg-emerald-600' : 'bg-slate-950'
+              }`}
+            >
+              {busy ? <Loader2 size={16} className="animate-spin" /> : sorti ? <LogIn size={16} /> : <LogOut size={16} />}
+              {sorti ? 'Marquer rentré' : 'Marquer ressorti'}
+            </button>
+          )}
+          {onVoirHistorique && (
+            <button
+              type="button"
+              onClick={onVoirHistorique}
+              className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-black text-slate-700"
+            >
+              <History size={16} /> Historique
+            </button>
+          )}
+          {onToggleActif && (
+            <button
+              type="button"
+              onClick={onToggleActif}
+              className="ml-auto inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-black text-slate-500"
+              title={vetement.actif ? 'Archiver ce vêtement' : 'Remettre dans la garde-robe'}
+            >
+              {vetement.actif ? <Archive size={16} /> : <ArchiveRestore size={16} />}
+            </button>
+          )}
+        </div>
       </div>
     </article>
   );

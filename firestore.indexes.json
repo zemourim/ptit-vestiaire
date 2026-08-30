@@ -1,6 +1,22 @@
 {
   "indexes": [
     {
+      "collectionGroup": "mouvements",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "vetementId", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "mouvements",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "fille", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "sorties",
       "queryScope": "COLLECTION",
       "fields": [

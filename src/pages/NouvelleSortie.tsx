@@ -1,11 +1,14 @@
 import { Sparkles, X } from 'lucide-react';
 import { FirebaseError } from 'firebase/app';
 import type { FormEvent } from 'react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { PriseDePhoto } from '../components/PriseDePhoto';
 import { SelecteurFille } from '../components/SelecteurFille';
+import { ResolutionVetements, ResumeReutilises } from '../components/ResolutionVetements';
+import { calculerResolutions, type ChoixVetement } from '../lib/resolution';
 import { analyzePhoto } from '../firebase/analyzePhoto';
-import { createSortie } from '../firebase/useSorties';
+import { enregistrerSortiePhoto, type EntreeSortie } from '../firebase/useMouvements';
+import { useVetements } from '../firebase/useVetements';
 import { uploadSortiePhoto } from '../firebase/useStorage';
 import type { Fille } from '../types';
 
@@ -20,9 +23,16 @@ export function NouvelleSortie({ userId, onCreated }: Props) {
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [tagInput, setTagInput] = useState('');
   const [vetements, setVetements] = useState<string[]>([]);
+  const [overrides, setOverrides] = useState<Record<string, ChoixVetement>>({});
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const { vetements: catalogue } = useVetements();
+
+  const lignes = useMemo(
+    () => calculerResolutions(catalogue, fille, vetements, overrides),
+    [catalogue, fille, vetements, overrides]
+  );
 
   function addTag(value = tagInput) {
     const tag = value.trim().toLowerCase();
@@ -33,6 +43,7 @@ export function NouvelleSortie({ userId, onCreated }: Props) {
 
   function removeTag(tag: string) {
     setVetements((current) => current.filter((item) => item !== tag));
+    setOverrides((current) => Object.fromEntries(Object.entries(current).filter(([cle]) => cle !== tag)));
   }
 
   async function handleAnalyze() {
@@ -71,13 +82,25 @@ export function NouvelleSortie({ userId, onCreated }: Props) {
       return;
     }
 
+    // Deux tags peuvent viser le même vêtement du catalogue : on n'écrit qu'un mouvement.
+    const dejaVus = new Set<string>();
+    const entrees: EntreeSortie[] = [];
+    lignes.forEach((ligne) => {
+      if (ligne.choix) {
+        if (dejaVus.has(ligne.choix)) return;
+        dejaVus.add(ligne.choix);
+      }
+      entrees.push({ nom: ligne.tag, vetementId: ligne.choix });
+    });
+
     setSaving(true);
     try {
-      const uploaded = await uploadSortiePhoto(photo, userId, fille);
-      await createSortie({ fille, vetements, ...uploaded });
+      const { photoUrl } = await uploadSortiePhoto(photo, userId, fille);
+      await enregistrerSortiePhoto(fille, photoUrl, entrees);
       setPhoto(null);
       setPhotoDataUrl(null);
       setVetements([]);
+      setOverrides({});
       setTagInput('');
       onCreated();
     } catch (caught) {
@@ -86,6 +109,8 @@ export function NouvelleSortie({ userId, onCreated }: Props) {
       setSaving(false);
     }
   }
+
+  const nouveaux = lignes.filter((ligne) => ligne.choix === null).length;
 
   return (
     <form className="space-y-5" onSubmit={(event) => void handleSubmit(event)}>
@@ -145,10 +170,24 @@ export function NouvelleSortie({ userId, onCreated }: Props) {
         </div>
       </section>
 
+      {vetements.length > 0 && (
+        <div className="space-y-3">
+          <ResumeReutilises lignes={lignes} />
+          <ResolutionVetements
+            lignes={lignes}
+            onChoixChange={(tag, choix) => setOverrides((current) => ({ ...current, [tag]: choix }))}
+          />
+        </div>
+      )}
+
       {error && <p className="rounded-2xl bg-rose-100 p-4 text-sm font-bold text-rose-700">{error}</p>}
 
       <button type="submit" disabled={saving} className="w-full rounded-2xl bg-slate-950 px-5 py-4 text-lg font-black text-white disabled:bg-slate-300">
-        {saving ? 'Enregistrement...' : 'Enregistrer la sortie'}
+        {saving
+          ? 'Enregistrement...'
+          : nouveaux > 0
+            ? `Enregistrer (${nouveaux} nouveau(x) vêtement(s))`
+            : 'Enregistrer la sortie'}
       </button>
     </form>
   );

@@ -1,6 +1,7 @@
-import { Archive, LogOut, PlusCircle, Settings, Shirt } from 'lucide-react';
+import { Archive, LayoutGrid, LogOut, PlusCircle, Settings, Shirt } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Connexion } from './pages/Connexion';
+import { GardeRobe } from './pages/GardeRobe';
 import { Historique } from './pages/Historique';
 import { NouvelleSortie } from './pages/NouvelleSortie';
 import { Reglages } from './pages/Reglages';
@@ -8,10 +9,11 @@ import { TableauDeBord } from './pages/TableauDeBord';
 import { hasFirebaseConfig } from './firebase/config';
 import { useAuth } from './firebase/useAuth';
 
-type Tab = 'dashboard' | 'nouvelle' | 'historique' | 'reglages';
+type Tab = 'dashboard' | 'garderobe' | 'nouvelle' | 'historique' | 'reglages';
 
 const tabs: Array<{ id: Tab; label: string; icon: typeof Shirt }> = [
   { id: 'dashboard', label: 'Sortis', icon: Shirt },
+  { id: 'garderobe', label: 'Garde-robe', icon: LayoutGrid },
   { id: 'nouvelle', label: 'Ajouter', icon: PlusCircle },
   { id: 'historique', label: 'Historique', icon: Archive },
   { id: 'reglages', label: 'Réglages', icon: Settings }
@@ -61,13 +63,14 @@ export function App() {
 
       <main className="mx-auto max-w-6xl px-4 pb-28 pt-5 md:pb-8">
         {activeTab === 'dashboard' && <TableauDeBord />}
+        {activeTab === 'garderobe' && <GardeRobe />}
         {activeTab === 'nouvelle' && <NouvelleSortie userId={auth.user.uid} onCreated={() => openTab('dashboard')} />}
         {activeTab === 'historique' && <Historique />}
         {activeTab === 'reglages' && <Reglages userEmail={auth.user.email ?? ''} />}
       </main>
 
       <nav className="mobile-nav fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 px-2 pt-2 backdrop-blur md:hidden">
-        <div className="grid h-16 grid-cols-4 gap-1">
+        <div className="grid h-16 grid-cols-5 gap-1">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const selected = activeTab === tab.id;
@@ -89,7 +92,7 @@ export function App() {
       </nav>
 
       <nav className="mx-auto hidden max-w-6xl px-4 pb-8 md:block">
-        <div className="grid grid-cols-4 gap-3 rounded-3xl border border-white/80 bg-white/80 p-2 shadow-soft backdrop-blur">
+        <div className="grid grid-cols-5 gap-3 rounded-3xl border border-white/80 bg-white/80 p-2 shadow-soft backdrop-blur">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const selected = activeTab === tab.id;
