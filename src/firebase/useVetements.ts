@@ -129,6 +129,15 @@ export async function definirActif(vetementId: string, actif: boolean) {
 }
 
 /**
+ * Les mouvements sont volontairement conservés : ils constituent le journal
+ * familial. L'historique global les affiche alors comme « Vêtement supprimé ».
+ */
+export async function supprimerVetement(vetementId: string) {
+  if (!db) throw new Error('Firebase n’est pas configuré.');
+  await deleteDoc(doc(db, 'vetements', vetementId));
+}
+
+/**
  * Fusionne un doublon dans le vêtement à conserver : tous les mouvements de la
  * source sont réattribués à la cible, puis la source est supprimée. Le statut de
  * la cible est recalculé à partir du mouvement le plus récent des deux.

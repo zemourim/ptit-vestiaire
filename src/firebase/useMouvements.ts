@@ -134,3 +134,32 @@ export async function enregistrerSortiePhoto(fille: Fille, photoUrl: string, ent
 
   await batch.commit();
 }
+
+/**
+ * Ajoute uniquement les nouveaux vêtements au catalogue. Aucun mouvement n'est
+ * créé : ils commencent donc logiquement « revenus », à la maison.
+ */
+export async function enregistrerAjoutCataloguePhoto(fille: Fille, photoUrl: string, entrees: EntreeSortie[]) {
+  if (!db) throw new Error('Firebase n’est pas configuré.');
+  const nouveaux = entrees.filter((entree) => !entree.vetementId);
+  if (nouveaux.length === 0) throw new Error('Tous ces vêtements sont déjà présents au catalogue.');
+
+  const maintenant = Timestamp.now();
+  const batch = writeBatch(db);
+  nouveaux.forEach((entree) => {
+    const vetementRef = doc(collection(db!, 'vetements'));
+    const nom = entree.nom.trim();
+    batch.set(vetementRef, {
+      fille,
+      nom,
+      nomNormalise: normaliserNom(nom),
+      photoReference: photoUrl,
+      dateCreation: maintenant,
+      actif: true,
+      statutActuel: 'revenu',
+      dernierMouvementId: null,
+      dateDernierMouvement: null
+    });
+  });
+  await batch.commit();
+}

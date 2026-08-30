@@ -132,15 +132,17 @@ Ces écritures partent dans un seul batch Firestore : le catalogue ne peut jamai
 
 - Connexion Firebase Authentication par email/mot de passe.
 - Limitation côté interface à deux emails adultes via `VITE_ALLOWED_EMAILS`.
-- Ajout d'une sortie du matin avec photo, prénom, date automatique et tags modifiables.
+- Ajout avec photo prise depuis l'appareil ou choisie dans la galerie, prénom et tags modifiables.
+- Choix explicite entre une sortie (mouvements `sorti`) et un simple ajout à la garde-robe (sans mouvement, statut initial `revenu`).
 - Compression automatique de la photo dans le navigateur avant tout envoi vers Firebase Storage.
 - Analyse des vêtements par Cloud Function `analyzeVetements` et API Anthropic Claude Vision.
 - Les suggestions sont modifiables, supprimables et complétables manuellement avant l'enregistrement.
 - Catalogue permanent de vêtements : un vêtement n'est créé qu'une fois, puis réutilisé à chaque sortie.
 - Rapprochement automatique des noms pour éviter les doublons, avec confirmation manuelle en cas de doute.
-- Tableau de bord des vêtements encore `sorti`, triés du plus ancien au plus récent.
+- Tableau de bord compact des vêtements encore `sorti`, avec vignettes, date de sortie et retour rapide, trié du plus ancien au plus récent.
 - Historique complet par vêtement : toutes ses sorties et tous ses retours, avec l'origine de chaque changement.
 - Onglet Garde-robe listant le catalogue par fille, avec bouton de changement de statut en un clic.
+- Suppression confirmée d'un vêtement du catalogue. Les mouvements liés sont conservés : le journal familial reste complet et les désigne comme « Vêtement supprimé ».
 - Archivage d'un vêtement devenu trop petit ou perdu, sans perdre son historique.
 - Fusion manuelle de deux vêtements en doublon depuis les Réglages.
 - Badge rouge si une sortie dépasse le seuil configurable, par défaut 7 jours.

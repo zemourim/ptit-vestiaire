@@ -1,4 +1,4 @@
-import { Archive, ArchiveRestore, History, Loader2, LogIn, LogOut, Shirt } from 'lucide-react';
+import { Archive, ArchiveRestore, History, Loader2, LogIn, LogOut, Shirt, Trash2 } from 'lucide-react';
 import { BadgeStatut } from './BadgeStatut';
 import { daysSince, formatDate, isLate } from '../lib/dates';
 import { filleStyles } from '../lib/constants';
@@ -11,9 +11,10 @@ type Props = {
   onToggleStatut?: () => void;
   onVoirHistorique?: () => void;
   onToggleActif?: () => void;
+  onSupprimer?: () => void;
 };
 
-export function CarteVetement({ vetement, alertAfterDays, busy, onToggleStatut, onVoirHistorique, onToggleActif }: Props) {
+export function CarteVetement({ vetement, alertAfterDays, busy, onToggleStatut, onVoirHistorique, onToggleActif, onSupprimer }: Props) {
   const sorti = vetement.statutActuel === 'sorti';
   const jours = vetement.dateDernierMouvement ? daysSince(vetement.dateDernierMouvement) : null;
   const late = sorti && vetement.dateDernierMouvement ? isLate(vetement.dateDernierMouvement, alertAfterDays) : false;
@@ -79,6 +80,17 @@ export function CarteVetement({ vetement, alertAfterDays, busy, onToggleStatut, 
               title={vetement.actif ? 'Archiver ce vêtement' : 'Remettre dans la garde-robe'}
             >
               {vetement.actif ? <Archive size={16} /> : <ArchiveRestore size={16} />}
+            </button>
+          )}
+          {onSupprimer && (
+            <button
+              type="button"
+              onClick={onSupprimer}
+              className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-black text-rose-600"
+              title="Supprimer ce vêtement"
+              aria-label={`Supprimer ${vetement.nom}`}
+            >
+              <Trash2 size={16} />
             </button>
           )}
         </div>

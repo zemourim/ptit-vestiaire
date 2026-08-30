@@ -1,10 +1,10 @@
-import { Search } from 'lucide-react';
+import { AlertTriangle, Search, Trash2, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { CarteVetement } from '../components/CarteVetement';
 import { HistoriqueVetement } from '../components/HistoriqueVetement';
 import { FILLES } from '../lib/constants';
 import { normaliserNom } from '../lib/normalize';
-import { basculerStatut, definirActif, useVetements } from '../firebase/useVetements';
+import { basculerStatut, definirActif, supprimerVetement, useVetements } from '../firebase/useVetements';
 import { useSettings } from '../firebase/useSettings';
 import type { Fille, Vetement } from '../types';
 
@@ -19,6 +19,7 @@ export function GardeRobe() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [detail, setDetail] = useState<Vetement | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [aSupprimer, setASupprimer] = useState<Vetement | null>(null);
 
   const visibles = useMemo(() => {
     const cible = normaliserNom(recherche);
@@ -61,6 +62,20 @@ export function GardeRobe() {
       await definirActif(vetement.id, !vetement.actif);
     } catch {
       setActionError(`Impossible d’archiver « ${vetement.nom} ».`);
+    }
+  }
+
+  async function supprimer() {
+    if (!aSupprimer) return;
+    setActionError(null);
+    setBusyId(aSupprimer.id);
+    try {
+      await supprimerVetement(aSupprimer.id);
+      setASupprimer(null);
+    } catch {
+      setActionError(`Impossible de supprimer « ${aSupprimer.nom} ».`);
+    } finally {
+      setBusyId(null);
     }
   }
 
@@ -136,6 +151,7 @@ export function GardeRobe() {
                 onToggleStatut={() => void basculer(vetement)}
                 onVoirHistorique={() => setDetail(vetement)}
                 onToggleActif={() => void archiver(vetement)}
+                onSupprimer={() => setASupprimer(vetement)}
               />
             ))}
           </div>
@@ -143,6 +159,22 @@ export function GardeRobe() {
       ))}
 
       {detail && <HistoriqueVetement vetement={detail} onClose={() => setDetail(null)} />}
+      {aSupprimer && (
+        <div className="fixed inset-0 z-40 flex items-end justify-center bg-slate-950/40 p-0 md:items-center md:p-6" role="presentation">
+          <section role="dialog" aria-modal="true" aria-labelledby="suppression-title" className="w-full max-w-md rounded-t-3xl bg-white p-5 shadow-xl md:rounded-3xl">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex gap-3"><span className="rounded-full bg-rose-100 p-3 text-rose-600"><AlertTriangle size={22} /></span><div><p className="text-sm font-black uppercase tracking-[0.18em] text-rose-600">Suppression</p><h3 id="suppression-title" className="text-xl font-black">Supprimer ce vêtement ?</h3></div></div>
+              <button type="button" onClick={() => setASupprimer(null)} className="rounded-full bg-slate-100 p-2 text-slate-600" aria-label="Fermer"><X size={18} /></button>
+            </div>
+            <p className="mt-4 font-bold text-slate-600">Voulez-vous vraiment supprimer « {aSupprimer.nom} » ? Cette action est irréversible.</p>
+            <p className="mt-2 text-sm font-bold text-slate-500">Les mouvements déjà enregistrés seront conservés dans l’historique, où ils apparaîtront comme liés à un vêtement supprimé.</p>
+            <div className="mt-5 flex justify-end gap-3">
+              <button type="button" onClick={() => setASupprimer(null)} disabled={busyId === aSupprimer.id} className="rounded-2xl bg-slate-100 px-4 py-3 font-black text-slate-700">Annuler</button>
+              <button type="button" onClick={() => void supprimer()} disabled={busyId === aSupprimer.id} className="inline-flex items-center gap-2 rounded-2xl bg-rose-600 px-4 py-3 font-black text-white disabled:bg-rose-300"><Trash2 size={17} /> {busyId === aSupprimer.id ? 'Suppression...' : 'Supprimer'}</button>
+            </div>
+          </section>
+        </div>
+      )}
     </section>
   );
 }

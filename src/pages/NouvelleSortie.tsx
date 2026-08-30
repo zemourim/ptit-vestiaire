@@ -1,4 +1,4 @@
-import { Sparkles, X } from 'lucide-react';
+import { BookOpen, LogOut, Sparkles, X } from 'lucide-react';
 import { FirebaseError } from 'firebase/app';
 import type { FormEvent } from 'react';
 import { useMemo, useState } from 'react';
@@ -7,7 +7,7 @@ import { SelecteurFille } from '../components/SelecteurFille';
 import { ResolutionVetements, ResumeReutilises } from '../components/ResolutionVetements';
 import { calculerResolutions, type ChoixVetement } from '../lib/resolution';
 import { analyzePhoto } from '../firebase/analyzePhoto';
-import { enregistrerSortiePhoto, type EntreeSortie } from '../firebase/useMouvements';
+import { enregistrerAjoutCataloguePhoto, enregistrerSortiePhoto, type EntreeSortie } from '../firebase/useMouvements';
 import { useVetements } from '../firebase/useVetements';
 import { uploadSortiePhoto } from '../firebase/useStorage';
 import type { Fille } from '../types';
@@ -17,8 +17,11 @@ type Props = {
   onCreated: () => void;
 };
 
+type TypeAjout = 'sortie' | 'catalogue';
+
 export function NouvelleSortie({ userId, onCreated }: Props) {
   const [fille, setFille] = useState<Fille>('Sanaa');
+  const [typeAjout, setTypeAjout] = useState<TypeAjout>('sortie');
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [tagInput, setTagInput] = useState('');
@@ -93,10 +96,19 @@ export function NouvelleSortie({ userId, onCreated }: Props) {
       entrees.push({ nom: ligne.tag, vetementId: ligne.choix });
     });
 
+    if (typeAjout === 'catalogue' && !entrees.some((entree) => !entree.vetementId)) {
+      setError('Tous ces vêtements sont déjà présents au catalogue.');
+      return;
+    }
+
     setSaving(true);
     try {
       const { photoUrl } = await uploadSortiePhoto(photo, userId, fille);
-      await enregistrerSortiePhoto(fille, photoUrl, entrees);
+      if (typeAjout === 'sortie') {
+        await enregistrerSortiePhoto(fille, photoUrl, entrees);
+      } else {
+        await enregistrerAjoutCataloguePhoto(fille, photoUrl, entrees);
+      }
       setPhoto(null);
       setPhotoDataUrl(null);
       setVetements([]);
@@ -115,11 +127,22 @@ export function NouvelleSortie({ userId, onCreated }: Props) {
   return (
     <form className="space-y-5" onSubmit={(event) => void handleSubmit(event)}>
       <section>
-        <p className="text-sm font-black uppercase tracking-[0.22em] text-slate-500">Nouvelle sortie du matin</p>
-        <h2 className="mt-1 text-3xl font-black">Qui part à l’école ?</h2>
+        <p className="text-sm font-black uppercase tracking-[0.22em] text-slate-500">Ajouter des vêtements</p>
+        <h2 className="mt-1 text-3xl font-black">Pour qui est cet ajout ?</h2>
       </section>
 
       <SelecteurFille value={fille} onChange={setFille} />
+      <fieldset className="grid gap-3 sm:grid-cols-2">
+        <legend className="mb-2 text-sm font-black text-slate-700">Quel type d’ajout ?</legend>
+        <label className={`cursor-pointer rounded-3xl border-2 p-4 ${typeAjout === 'sortie' ? 'border-slate-950 bg-slate-950 text-white' : 'border-slate-200 bg-white'}`}>
+          <input className="sr-only" type="radio" name="type-ajout" checked={typeAjout === 'sortie'} onChange={() => setTypeAjout('sortie')} />
+          <span className="flex items-start gap-3"><LogOut className="mt-0.5 shrink-0" size={21} /><span><span className="block font-black">C’est une sortie</span><span className={`mt-1 block text-sm font-bold ${typeAjout === 'sortie' ? 'text-slate-200' : 'text-slate-500'}`}>Crée ou réutilise le vêtement et le marque sorti.</span></span></span>
+        </label>
+        <label className={`cursor-pointer rounded-3xl border-2 p-4 ${typeAjout === 'catalogue' ? 'border-cyan-600 bg-cyan-600 text-white' : 'border-slate-200 bg-white'}`}>
+          <input className="sr-only" type="radio" name="type-ajout" checked={typeAjout === 'catalogue'} onChange={() => setTypeAjout('catalogue')} />
+          <span className="flex items-start gap-3"><BookOpen className="mt-0.5 shrink-0" size={21} /><span><span className="block font-black">Juste ajouter à la garde-robe</span><span className={`mt-1 block text-sm font-bold ${typeAjout === 'catalogue' ? 'text-cyan-50' : 'text-slate-500'}`}>Ajoute seulement les nouveaux vêtements, déjà à la maison.</span></span></span>
+        </label>
+      </fieldset>
       <PriseDePhoto file={photo} onFileChange={(file, dataUrl) => { setPhoto(file); setPhotoDataUrl(dataUrl); }} />
 
       <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -186,8 +209,10 @@ export function NouvelleSortie({ userId, onCreated }: Props) {
         {saving
           ? 'Enregistrement...'
           : nouveaux > 0
-            ? `Enregistrer (${nouveaux} nouveau(x) vêtement(s))`
-            : 'Enregistrer la sortie'}
+            ? typeAjout === 'sortie'
+              ? `Enregistrer la sortie (${nouveaux} nouveau(x) vêtement(s))`
+              : `Ajouter à la garde-robe (${nouveaux} nouveau(x) vêtement(s))`
+            : typeAjout === 'sortie' ? 'Enregistrer la sortie' : 'Ajouter à la garde-robe'}
       </button>
     </form>
   );
