@@ -9,6 +9,9 @@ const COMPRESSION_OPTIONS = {
   useWebWorker: true,
 } as const;
 
+/** Au-delà de ce poids, la photo n'a pas été compressée : on refuse de l'envoyer telle quelle. */
+export const TAILLE_MAX_UPLOAD = 700 * 1024;
+
 export async function compresserPhoto(file: File): Promise<File> {
   const compressed = await imageCompression(file, COMPRESSION_OPTIONS);
   const name = file.name.replace(/\.[^./\\]+$/, '') + '.jpg';
