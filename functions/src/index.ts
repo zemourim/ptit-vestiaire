@@ -9,6 +9,19 @@ type AnalyzeRequest = {
 const acceptedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'] as const;
 const clothingPrompt = 'Analyse cette photo et liste uniquement les vêtements et accessoires visibles et portés. Réponds exclusivement avec un tableau JSON valide de chaînes courtes en français, sans Markdown ni phrase autour. Exemple : ["manteau bleu", "baskets blanches"]. N’inclus pas les personnes, le visage, le décor ou les objets qui ne sont pas des vêtements/accessoires.';
 
+function parseClothingResponse(text: string): string[] {
+  const cleaned = text.replace(/```(?:json)?/gi, '').trim();
+  const start = cleaned.indexOf('[');
+  const end = cleaned.lastIndexOf(']');
+  if (start < 0 || end < start) throw new Error('Missing JSON array');
+
+  const parsed: unknown = JSON.parse(cleaned.slice(start, end + 1));
+  if (!Array.isArray(parsed) || !parsed.every((item) => typeof item === 'string')) {
+    throw new Error('Invalid response shape');
+  }
+  return parsed.map((item) => item.trim()).filter(Boolean).slice(0, 20);
+}
+
 export const analyzeVetements = onCall<AnalyzeRequest>({ secrets: ['ANTHROPIC_API_KEY'] }, async (request) => {
   if (!request.auth) {
     throw new HttpsError('unauthenticated', 'Connecte-toi pour analyser une photo.');
@@ -56,11 +69,7 @@ export const analyzeVetements = onCall<AnalyzeRequest>({ secrets: ['ANTHROPIC_AP
 
   const text = response.content.find((block) => block.type === 'text')?.text ?? '[]';
   try {
-    const parsed: unknown = JSON.parse(text);
-    if (!Array.isArray(parsed) || !parsed.every((item) => typeof item === 'string')) {
-      throw new Error('Invalid response shape');
-    }
-    return { vetements: parsed.map((item) => item.trim()).filter(Boolean).slice(0, 20) };
+    return { vetements: parseClothingResponse(text) };
   } catch {
     throw new HttpsError('internal', 'La réponse de l’analyse IA est invalide.');
   }
