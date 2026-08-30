@@ -65,8 +65,8 @@ Document `settings/global` :
 - Connexion Firebase Authentication par email/mot de passe.
 - Limitation côté interface à deux emails adultes via `VITE_ALLOWED_EMAILS`.
 - Ajout d'une sortie du matin avec photo, prénom, date automatique et tags modifiables.
-- Analyse IA optionnelle via Cloud Function `analyzeVetements` et API Anthropic.
-- Mode manuel complet si aucune clé Anthropic n'est configurée.
+- Suggestions de vêtements par détection locale COCO-SSD dans le navigateur.
+- Aucun appel à une API d'analyse, aucune clé API et aucun coût à l'usage pour la reconnaissance.
 - Tableau de bord des vêtements encore `sorti`, triés du plus ancien au plus récent.
 - Badge rouge si une sortie dépasse le seuil configurable, par défaut 7 jours.
 - Historique filtrable par Sanaa, Manelle ou toutes les sorties.
@@ -88,7 +88,7 @@ Le terminal actuel ne contient pas `npm`; installe Node.js depuis <https://nodej
 brew install node
 ```
 
-## Configuration Firebase gratuite
+## Configuration Firebase
 
 1. Va sur <https://console.firebase.google.com/> et crée un projet Firebase.
 2. Dans Authentication, active le fournisseur `Email/Password`.
@@ -113,23 +113,17 @@ VITE_FIREBASE_APP_ID=...
 VITE_ALLOWED_EMAILS=ton.email@example.com,email.femme@example.com
 ```
 
-## Analyse IA Claude Vision
+## Reconnaissance locale des vêtements
 
-La reconnaissance automatique est optionnelle. Sans clé Anthropic, l'app continue à fonctionner avec saisie manuelle des vêtements.
+Quand une photo est choisie, l'application charge une seule fois le modèle pré-entraîné COCO-SSD via TensorFlow.js, puis exécute la détection entièrement dans le navigateur. Le modèle est mis en cache par le navigateur et aucune photo n'est envoyée à un service d'analyse tiers.
 
-Pour activer l'analyse :
+La détection propose uniquement les catégories accessoires disponibles dans COCO-SSD et pertinentes pour le vestiaire, comme les sacs, les valises et les cravates. Les suggestions sont modifiables, supprimables ou complétables manuellement. Si aucun objet pertinent n'est trouvé, le champ reste vide et l'enregistrement manuel reste disponible.
 
-```bash
-cd functions
-npm install
-firebase functions:secrets:set ANTHROPIC_API_KEY
-```
-
-Puis adapte le déploiement si Firebase te demande de lier ce secret. Selon l'état actuel des offres Firebase, Cloud Functions peut demander un projet avec facturation activée même si l'usage reste très faible. Le mode manuel reste compatible avec le plan gratuit Spark.
+Cette fonctionnalité ne nécessite aucune clé API, aucun compte auprès d'un fournisseur d'IA et aucune facturation à l'usage.
 
 ## Déploiement
 
-Installe Node.js 20 ou plus, puis installe Firebase CLI si la commande `firebase` n'est pas disponible :
+Installe Node.js 22 ou plus, puis installe Firebase CLI si la commande `firebase` n'est pas disponible :
 
 ```bash
 npm install -g firebase-tools
