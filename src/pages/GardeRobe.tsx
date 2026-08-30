@@ -2,7 +2,7 @@ import { AlertTriangle, Search, Trash2, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { CarteVetement } from '../components/CarteVetement';
 import { HistoriqueVetement } from '../components/HistoriqueVetement';
-import { FILLES } from '../lib/constants';
+import { FILLES, filleStyles } from '../lib/constants';
 import { normaliserNom } from '../lib/normalize';
 import { basculerStatut, definirActif, supprimerVetement, useVetements } from '../firebase/useVetements';
 import { useSettings } from '../firebase/useSettings';
@@ -136,7 +136,7 @@ export function GardeRobe() {
       {FILLES.filter((fille) => parFille[fille].length > 0).map((fille) => (
         <section key={fille} className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-2xl font-black">{fille}</h3>
+            <h3 className={`text-2xl font-black ${filleStyles[fille].text}`}>{fille}</h3>
             <span className="rounded-full bg-white px-3 py-1 text-sm font-black text-slate-600 shadow-sm">
               {parFille[fille].filter((vetement) => vetement.statutActuel === 'sorti').length} sorti(s) sur {parFille[fille].length}
             </span>

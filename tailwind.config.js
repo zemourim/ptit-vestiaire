@@ -14,10 +14,10 @@ export default {
           700: '#0e7490'
         },
         manelle: {
-          50: '#fff7ed',
-          100: '#ffedd5',
-          500: '#f97316',
-          700: '#c2410c'
+          50: '#f5f3ff',
+          100: '#ede9fe',
+          500: '#8b5cf6',
+          700: '#6d28d9'
         }
       },
       boxShadow: {

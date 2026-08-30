@@ -11,6 +11,9 @@ export function PriseDePhoto({ file, onFileChange }: Props) {
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [compressing, setCompressing] = useState(false);
+  const [isMobileLike, setIsMobileLike] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(pointer: coarse), (max-width: 767px)').matches
+  );
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
 
@@ -19,6 +22,13 @@ export function PriseDePhoto({ file, onFileChange }: Props) {
       if (preview) URL.revokeObjectURL(preview);
     };
   }, [preview]);
+
+  useEffect(() => {
+    const media = window.matchMedia('(pointer: coarse), (max-width: 767px)');
+    const update = () => setIsMobileLike(media.matches);
+    media.addEventListener?.('change', update);
+    return () => media.removeEventListener?.('change', update);
+  }, []);
 
   async function handleChange(nextFile: File | undefined) {
     setError(null);
@@ -69,20 +79,20 @@ export function PriseDePhoto({ file, onFileChange }: Props) {
         )}
         {!compressing && (
           <div className="mt-4 flex flex-wrap justify-center gap-2">
-            <button
-              type="button"
-              onClick={() => cameraInputRef.current?.click()}
-              className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-4 py-2 font-black text-white"
-            >
-              <Camera size={17} /> Prendre une photo
-            </button>
-            <button
-              type="button"
-              onClick={() => galleryInputRef.current?.click()}
-              className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 font-black text-slate-700 shadow-sm"
-            >
-              <Images size={17} /> Choisir dans la galerie
-            </button>
+            {isMobileLike ? (
+              <>
+                <button type="button" onClick={() => cameraInputRef.current?.click()} className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-4 py-2 font-black text-white">
+                  <Camera size={17} /> Prendre une photo
+                </button>
+                <button type="button" onClick={() => galleryInputRef.current?.click()} className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 font-black text-slate-700 shadow-sm">
+                  <Images size={17} /> Choisir dans la galerie
+                </button>
+              </>
+            ) : (
+              <button type="button" onClick={() => galleryInputRef.current?.click()} className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-4 py-2 font-black text-white">
+                <Images size={17} /> Choisir une photo
+              </button>
+            )}
           </div>
         )}
       </div>

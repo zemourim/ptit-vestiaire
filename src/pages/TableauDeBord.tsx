@@ -1,7 +1,7 @@
 import { History, Loader2, LogIn, Shirt } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { HistoriqueVetement } from '../components/HistoriqueVetement';
-import { FILLES } from '../lib/constants';
+import { FILLES, filleStyles } from '../lib/constants';
 import { daysSince, formatDate } from '../lib/dates';
 import { basculerStatut, useVetements } from '../firebase/useVetements';
 import { useSettings } from '../firebase/useSettings';
@@ -62,7 +62,7 @@ export function TableauDeBord() {
         {FILLES.map((fille) => (
           <section key={fille} className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-2xl font-black">{fille}</h3>
+              <h3 className={`text-2xl font-black ${filleStyles[fille].text}`}>{fille}</h3>
               <span className="rounded-full bg-white px-3 py-1 text-sm font-black text-slate-600 shadow-sm">
                 {byFille[fille].length} sorti(s)
               </span>
