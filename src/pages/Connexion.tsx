@@ -99,7 +99,6 @@ export function Connexion({ auth, firebaseReady }: Props) {
         <button type="button" onClick={() => { setMode(mode === 'connexion' ? 'inscription' : 'connexion'); setLocalError(null); }} className="mt-4 w-full text-sm font-black text-cyan-700">
           {mode === 'connexion' ? 'Nouveau parent ? Créer un compte' : 'J’ai déjà un compte : me connecter'}
         </button>
-        <p className="mt-3 text-center text-xs font-bold text-slate-400">Apple n’est pas proposé : Apple Sign-In nécessite un programme développeur payant.</p>
       </section>
     </main>
   );
