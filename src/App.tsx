@@ -1,6 +1,7 @@
 import { Archive, LogOut, PlusCircle, Settings, Shirt, Sparkles } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Connexion } from './pages/Connexion';
+import { ConfigurationFamille } from './pages/ConfigurationFamille';
 import { GardeRobe } from './pages/GardeRobe';
 import { Historique } from './pages/Historique';
 import { NouvelleSortie } from './pages/NouvelleSortie';
@@ -8,6 +9,7 @@ import { Reglages } from './pages/Reglages';
 import { TableauDeBord } from './pages/TableauDeBord';
 import { hasFirebaseConfig } from './firebase/config';
 import { useAuth } from './firebase/useAuth';
+import { useFamillesUtilisateur } from './firebase/useFamilles';
 
 type Tab = 'dashboard' | 'garderobe' | 'nouvelle' | 'historique' | 'reglages';
 
@@ -22,6 +24,7 @@ const tabs: Array<{ id: Tab; label: string; icon: typeof Shirt }> = [
 export function App() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const auth = useAuth();
+  const familles = useFamillesUtilisateur(auth.user?.uid ?? null);
 
   useEffect(() => {
     const nextTab = window.location.hash.replace('#', '') as Tab;
@@ -40,6 +43,9 @@ export function App() {
   if (!hasFirebaseConfig || !auth.user || !auth.isAllowed) {
     return <Connexion auth={auth} firebaseReady={hasFirebaseConfig} />;
   }
+
+  if (familles.loading) return <CenteredMessage title="PtitVestiaire" message="Chargement de la famille..." />;
+  if (familles.liens.length === 0) return <ConfigurationFamille userId={auth.user.uid} email={auth.user.email ?? ''} onCreated={() => window.location.reload()} />;
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#cffafe_0,#f8fafc_34%,#fff7ed_100%)] text-slate-950">
