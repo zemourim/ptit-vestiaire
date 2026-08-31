@@ -6,12 +6,32 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function member(familleId) {
+      return signedIn()
+        && familleId in get(/databases/$(database)/documents/utilisateurs/$(request.auth.uid)).data.familleIds;
+    }
+
+    match /familles/{familleId} {
+      allow read: if member(familleId);
+      allow create: if signedIn() && request.resource.data.proprietaireUserId == request.auth.uid;
+      allow update: if member(familleId);
+      allow delete: if signedIn() && resource.data.proprietaireUserId == request.auth.uid;
+    }
+
+    match /utilisateurs/{userId} {
+      allow read, write: if signedIn() && request.auth.uid == userId;
+    }
+
     match /vetements/{vetementId} {
-      allow read, create, update, delete: if signedIn();
+      allow read: if member(resource.data.familleId);
+      allow create, update: if member(request.resource.data.familleId);
+      allow delete: if member(resource.data.familleId);
     }
 
     match /mouvements/{mouvementId} {
-      allow read, create, update, delete: if signedIn();
+      allow read: if member(resource.data.familleId);
+      allow create, update: if member(request.resource.data.familleId);
+      allow delete: if member(resource.data.familleId);
     }
 
     // Ancienne collection, conservée en lecture le temps de valider la migration.
