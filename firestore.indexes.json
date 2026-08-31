@@ -4,6 +4,7 @@
       "collectionGroup": "mouvements",
       "queryScope": "COLLECTION",
       "fields": [
+        { "fieldPath": "familleId", "order": "ASCENDING" },
         { "fieldPath": "vetementId", "order": "ASCENDING" },
         { "fieldPath": "date", "order": "DESCENDING" }
       ]
@@ -20,6 +21,7 @@
       "collectionGroup": "mouvements",
       "queryScope": "COLLECTION",
       "fields": [
+        { "fieldPath": "familleId", "order": "ASCENDING" },
         { "fieldPath": "fille", "order": "ASCENDING" },
         { "fieldPath": "date", "order": "DESCENDING" }
       ]
