@@ -1,4 +1,4 @@
-import { LockKeyhole, Mail } from 'lucide-react';
+import { Globe2, LockKeyhole, Mail } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
 import type { useAuth } from '../firebase/useAuth';
@@ -14,6 +14,7 @@ export function Connexion({ auth, firebaseReady }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [mode, setMode] = useState<'connexion' | 'inscription'>('connexion');
+  const [showEmail, setShowEmail] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -27,6 +28,14 @@ export function Connexion({ auth, firebaseReady }: Props) {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  async function handleGoogle() {
+    setSubmitting(true);
+    setLocalError(null);
+    try { await auth.signInGoogle(); }
+    catch (caught) { setLocalError(caught instanceof Error ? caught.message : 'Connexion Google impossible.'); }
+    finally { setSubmitting(false); }
   }
 
   return (
@@ -44,7 +53,9 @@ export function Connexion({ auth, firebaseReady }: Props) {
           </div>
         )}
 
-        <form className="space-y-4" onSubmit={(event) => void handleSubmit(event)}>
+        <button type="button" onClick={() => void handleGoogle()} disabled={submitting || !firebaseReady} className="inline-flex w-full items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-4 font-black text-slate-800 shadow-sm disabled:bg-slate-100"><Globe2 size={20} /> Continuer avec Google</button>
+        <div className="my-5 flex items-center gap-3 text-xs font-black uppercase tracking-widest text-slate-400"><span className="h-px flex-1 bg-slate-200" />ou<span className="h-px flex-1 bg-slate-200" /></div>
+        {!showEmail ? <button type="button" onClick={() => setShowEmail(true)} className="w-full rounded-2xl bg-slate-950 px-5 py-4 font-black text-white">Continuer avec email</button> : <form className="space-y-4" onSubmit={(event) => void handleSubmit(event)}>
           <label className="block">
             <span className="text-sm font-black text-slate-700">Email</span>
             <span className="mt-2 flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
@@ -84,10 +95,11 @@ export function Connexion({ auth, firebaseReady }: Props) {
           >
             {submitting ? 'Patiente...' : mode === 'connexion' ? 'Entrer' : 'Créer mon compte'}
           </button>
-        </form>
+        </form>}
         <button type="button" onClick={() => { setMode(mode === 'connexion' ? 'inscription' : 'connexion'); setLocalError(null); }} className="mt-4 w-full text-sm font-black text-cyan-700">
           {mode === 'connexion' ? 'Nouveau parent ? Créer un compte' : 'J’ai déjà un compte : me connecter'}
         </button>
+        <p className="mt-3 text-center text-xs font-bold text-slate-400">Apple n’est pas proposé : Apple Sign-In nécessite un programme développeur payant.</p>
       </section>
     </main>
   );

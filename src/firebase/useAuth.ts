@@ -1,4 +1,4 @@
-import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from 'firebase/auth';
+import { createUserWithEmailAndPassword, GoogleAuthProvider, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, signOut, type User } from 'firebase/auth';
 import { useEffect, useMemo, useState } from 'react';
 import { allowedAdultEmails, auth } from './config';
 
@@ -9,6 +9,7 @@ type AuthState = {
   isAllowed: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
+  signInGoogle: () => Promise<void>;
   logOut: () => Promise<void>;
 };
 
@@ -75,5 +76,21 @@ export function useAuth(): AuthState {
     }
   }
 
-  return { user, loading, error, isAllowed, signIn, signUp, logOut };
+  async function signInGoogle() {
+    if (!auth) throw new Error('Firebase n’est pas encore configuré.');
+    setError(null);
+    try {
+      const credential = await signInWithPopup(auth, new GoogleAuthProvider());
+      const signedEmail = credential.user.email?.toLowerCase() ?? '';
+      if (allowedAdultEmails.length > 0 && !allowedAdultEmails.includes(signedEmail)) {
+        await signOut(auth);
+        throw new Error('Cette adresse Google n’est pas autorisée.');
+      }
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Connexion Google impossible.');
+      throw caught;
+    }
+  }
+
+  return { user, loading, error, isAllowed, signIn, signUp, signInGoogle, logOut };
 }

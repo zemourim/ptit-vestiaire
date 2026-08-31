@@ -131,6 +131,7 @@ Ces écritures partent dans un seul batch Firestore : le catalogue ne peut jamai
 ## Fonctionnalités livrées
 
 - Connexion Firebase Authentication par email/mot de passe.
+- Connexion Google gratuite via Firebase Authentication, en complément de l'email/mot de passe. Apple Sign-In n'est pas activé car il nécessite le programme développeur Apple payant (99 $/an).
 - Limitation côté interface à deux emails adultes via `VITE_ALLOWED_EMAILS`.
 - Ajout avec photo prise depuis l'appareil ou choisie dans la galerie, prénom et tags modifiables.
 - Choix explicite entre une sortie (mouvements `sorti`) et un simple ajout à la garde-robe (sans mouvement, statut initial `revenu`).
@@ -172,8 +173,9 @@ brew install node
 4. Active Cloud Firestore en mode production.
 5. Active Firebase Storage.
 6. Active Firebase Hosting.
-7. Dans les paramètres du projet, ajoute une application Web et copie la configuration Firebase.
-8. Copie `env.example` vers `.env` puis remplis les variables :
+7. Dans Authentication → Sign-in method, active Google et renseigne l’adresse email de support du projet. Aucun compte développeur payant n’est requis.
+8. Dans les paramètres du projet, ajoute une application Web et copie la configuration Firebase.
+9. Copie `env.example` vers `.env` puis remplis les variables :
 
 ```bash
 cp env.example .env
