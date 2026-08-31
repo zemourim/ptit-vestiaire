@@ -1,4 +1,4 @@
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from 'firebase/auth';
+import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from 'firebase/auth';
 import { useEffect, useMemo, useState } from 'react';
 import { allowedAdultEmails, auth } from './config';
 
@@ -8,6 +8,7 @@ type AuthState = {
   error: string | null;
   isAllowed: boolean;
   signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<void>;
   logOut: () => Promise<void>;
 };
 
@@ -58,5 +59,21 @@ export function useAuth(): AuthState {
     if (auth) await signOut(auth);
   }
 
-  return { user, loading, error, isAllowed, signIn, logOut };
+  async function signUp(email: string, password: string) {
+    if (!auth) throw new Error('Firebase n’est pas encore configuré.');
+    setError(null);
+    try {
+      const credential = await createUserWithEmailAndPassword(auth, email, password);
+      const signedEmail = credential.user.email?.toLowerCase() ?? '';
+      if (allowedAdultEmails.length > 0 && !allowedAdultEmails.includes(signedEmail)) {
+        await signOut(auth);
+        throw new Error('Cette adresse n’est pas autorisée.');
+      }
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Création du compte impossible.');
+      throw caught;
+    }
+  }
+
+  return { user, loading, error, isAllowed, signIn, signUp, logOut };
 }
