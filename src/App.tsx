@@ -74,7 +74,7 @@ export function App() {
         {activeTab === 'garderobe' && <GardeRobe />}
         {activeTab === 'nouvelle' && <NouvelleSortie userId={auth.user.uid} onCreated={() => openTab('dashboard')} />}
         {activeTab === 'historique' && <Historique />}
-        {activeTab === 'reglages' && <Reglages userEmail={auth.user.email ?? ''} />}
+        {activeTab === 'reglages' && <Reglages userEmail={auth.user.email ?? ''} userId={auth.user.uid} />}
       </main>
 
       <nav className="mobile-nav fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 px-2 pt-2 backdrop-blur md:hidden">

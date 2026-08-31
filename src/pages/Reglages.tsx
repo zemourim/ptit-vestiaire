@@ -1,4 +1,5 @@
 import { Merge, Save } from 'lucide-react';
+import { GestionFamille } from '../components/GestionFamille';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
 import { allowedAdultEmails } from '../firebase/config';
@@ -7,9 +8,10 @@ import { fusionnerVetements, useVetements } from '../firebase/useVetements';
 
 type Props = {
   userEmail: string;
+  userId: string;
 };
 
-export function Reglages({ userEmail }: Props) {
+export function Reglages({ userEmail, userId }: Props) {
   const { settings, error, updateSettings } = useSettings();
   const [alertAfterDays, setAlertAfterDays] = useState(settings.alertAfterDays);
   const [message, setMessage] = useState<string | null>(null);
@@ -55,6 +57,7 @@ export function Reglages({ userEmail }: Props) {
       </form>
 
       <FusionDoublons />
+      <GestionFamille userId={userId} />
 
       <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
         <h3 className="text-lg font-black">Accès adulte</h3>

@@ -52,3 +52,8 @@ export async function rejoindreFamille(code: string, userId: string, email: stri
   liens.push({ familleId: invitation.familleId, role: 'invite' });
   await setDoc(userRef, { email, familles: liens, familleIds: liens.map((lien) => lien.familleId) }, { merge: true });
 }
+
+export async function modifierEnfants(familleId: string, enfants: string[]) {
+  if (!db) throw new Error('Firebase n’est pas configuré.');
+  await updateDoc(doc(db, 'familles', familleId), { enfants: enfants.map((enfant) => enfant.trim()).filter(Boolean) });
+}
