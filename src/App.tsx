@@ -10,6 +10,7 @@ import { TableauDeBord } from './pages/TableauDeBord';
 import { hasFirebaseConfig } from './firebase/config';
 import { useAuth } from './firebase/useAuth';
 import { useFamillesUtilisateur } from './firebase/useFamilles';
+import { definirFamilleCourante } from './firebase/familleCourante';
 
 type Tab = 'dashboard' | 'garderobe' | 'nouvelle' | 'historique' | 'reglages';
 
@@ -46,6 +47,7 @@ export function App() {
 
   if (familles.loading) return <CenteredMessage title="PtitVestiaire" message="Chargement de la famille..." />;
   if (familles.liens.length === 0) return <ConfigurationFamille userId={auth.user.uid} email={auth.user.email ?? ''} onCreated={() => window.location.reload()} />;
+  definirFamilleCourante(familles.liens[0].familleId);
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#cffafe_0,#f8fafc_34%,#fff7ed_100%)] text-slate-950">

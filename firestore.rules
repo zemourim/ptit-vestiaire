@@ -22,6 +22,12 @@ service cloud.firestore {
       allow read, write: if signedIn() && request.auth.uid == userId;
     }
 
+    match /invitations/{invitationId} {
+      allow create: if signedIn() && member(request.resource.data.familleId);
+      allow read: if signedIn();
+      allow update, delete: if signedIn() && member(resource.data.familleId);
+    }
+
     match /vetements/{vetementId} {
       allow read: if member(resource.data.familleId);
       allow create, update: if member(request.resource.data.familleId);

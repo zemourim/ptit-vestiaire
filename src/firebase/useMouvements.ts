@@ -14,6 +14,7 @@ import { useEffect, useState } from 'react';
 import { normaliserNom } from '../lib/normalize';
 import type { Fille, Mouvement } from '../types';
 import { db } from './config';
+import { familleIdCourante } from './familleCourante';
 
 function messageErreur(caught: { code?: string; message?: string }) {
   return caught.code === 'permission-denied'
@@ -40,7 +41,7 @@ function useFluxMouvements(contraintes: QueryConstraint[], actif: boolean, cle: 
 
     setLoading(true);
     return onSnapshot(
-      query(collection(db, 'mouvements'), ...contraintes),
+      query(collection(db, 'mouvements'), where('familleId', '==', familleIdCourante() ?? '__aucune__'), ...contraintes),
       (snapshot) => {
         setMouvements(snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as Mouvement));
         setLoading(false);
@@ -92,6 +93,8 @@ export async function enregistrerSortiePhoto(fille: Fille, photoUrl: string, ent
   if (entrees.length === 0) throw new Error('Aucun vêtement à enregistrer.');
   const firestore = db;
   const maintenant = Timestamp.now();
+  const familleId = familleIdCourante();
+  if (!familleId) throw new Error('Aucune famille sélectionnée.');
   const batch = writeBatch(firestore);
 
   entrees.forEach((entree) => {
@@ -103,6 +106,7 @@ export async function enregistrerSortiePhoto(fille: Fille, photoUrl: string, ent
 
     batch.set(mouvementRef, {
       vetementId: vetementRef.id,
+      familleId,
       fille,
       date: maintenant,
       photoUrl,
@@ -120,6 +124,7 @@ export async function enregistrerSortiePhoto(fille: Fille, photoUrl: string, ent
     } else {
       batch.set(vetementRef, {
         fille,
+        familleId,
         nom,
         nomNormalise: normaliserNom(nom),
         photoReference: photoUrl,
@@ -145,12 +150,15 @@ export async function enregistrerAjoutCataloguePhoto(fille: Fille, photoUrl: str
   if (nouveaux.length === 0) throw new Error('Tous ces vêtements sont déjà présents au catalogue.');
 
   const maintenant = Timestamp.now();
+  const familleId = familleIdCourante();
+  if (!familleId) throw new Error('Aucune famille sélectionnée.');
   const batch = writeBatch(db);
   nouveaux.forEach((entree) => {
     const vetementRef = doc(collection(db!, 'vetements'));
     const nom = entree.nom.trim();
     batch.set(vetementRef, {
       fille,
+      familleId,
       nom,
       nomNormalise: normaliserNom(nom),
       photoReference: photoUrl,

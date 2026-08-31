@@ -15,6 +15,7 @@ import { useEffect, useState } from 'react';
 import { normaliserNom, SEUIL_SUGGESTION, similarite } from '../lib/normalize';
 import type { Fille, StatutVetement, Vetement } from '../types';
 import { db } from './config';
+import { familleIdCourante } from './familleCourante';
 
 /** Firestore refuse un batch de plus de 500 écritures. */
 const TAILLE_BATCH = 400;
@@ -42,7 +43,8 @@ export function useVetements() {
       return;
     }
 
-    const catalogue = query(collection(db, 'vetements'), orderBy('nom'));
+    const familleId = familleIdCourante();
+    const catalogue = query(collection(db, 'vetements'), where('familleId', '==', familleId ?? '__aucune__'), orderBy('nom'));
     return onSnapshot(
       catalogue,
       (snapshot) => {
@@ -94,6 +96,7 @@ export async function basculerStatut(vetement: Vetement) {
   const mouvementRef = doc(collection(firestore, 'mouvements'));
   batch.set(mouvementRef, {
     vetementId: vetement.id,
+    familleId: vetement.familleId,
     fille: vetement.fille,
     date: maintenant,
     photoUrl: null,
@@ -148,8 +151,8 @@ export async function fusionnerVetements(sourceId: string, cibleId: string) {
   const firestore = db;
 
   const [source, cible] = await Promise.all([
-    getDocs(query(collection(firestore, 'mouvements'), where('vetementId', '==', sourceId))),
-    getDocs(query(collection(firestore, 'mouvements'), where('vetementId', '==', cibleId)))
+    getDocs(query(collection(firestore, 'mouvements'), where('familleId', '==', familleIdCourante() ?? '__aucune__'), where('vetementId', '==', sourceId))),
+    getDocs(query(collection(firestore, 'mouvements'), where('familleId', '==', familleIdCourante() ?? '__aucune__'), where('vetementId', '==', cibleId)))
   ]);
 
   for (let debut = 0; debut < source.docs.length; debut += TAILLE_BATCH) {
