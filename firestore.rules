@@ -16,10 +16,18 @@ service cloud.firestore {
       allow create: if signedIn() && request.resource.data.proprietaireUserId == request.auth.uid;
       allow update: if member(familleId);
       allow delete: if signedIn() && resource.data.proprietaireUserId == request.auth.uid;
+      match /membres/{userId} {
+        allow read: if member(familleId);
+        allow create: if member(familleId);
+        allow delete: if signedIn() && get(/databases/$(database)/documents/familles/$(familleId)).data.proprietaireUserId == request.auth.uid;
+      }
     }
 
     match /utilisateurs/{userId} {
-      allow read, write: if signedIn() && request.auth.uid == userId;
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow create: if signedIn() && request.auth.uid == userId;
+      allow update: if signedIn() && (request.auth.uid == userId ||
+        get(/databases/$(database)/documents/familles/$(request.resource.data.familleIds[0])).data.proprietaireUserId == request.auth.uid);
     }
 
     match /invitations/{invitationId} {
