@@ -1,17 +1,20 @@
-import { addDoc, collection, deleteDoc, doc, getDoc, onSnapshot, query, setDoc, Timestamp, updateDoc, where } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, getDoc, onSnapshot, query, setDoc, Timestamp, updateDoc, where, writeBatch } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import type { Famille, LienFamille } from '../types';
 import { db } from './config';
 
 export async function creerFamille(userId: string, email: string, nom: string, enfants: string[]) {
   if (!db) throw new Error('Firebase n’est pas configuré.');
-  const familleRef = await addDoc(collection(db, 'familles'), {
+  const familleRef = doc(collection(db, 'familles'));
+  const batch = writeBatch(db);
+  batch.set(familleRef, {
     nom: nom.trim(), enfants: enfants.map((enfant) => enfant.trim()).filter(Boolean),
     dateCreation: Timestamp.now(), proprietaireUserId: userId
   });
   const lien: LienFamille = { familleId: familleRef.id, role: 'proprietaire' };
-  await setDoc(doc(db, 'utilisateurs', userId), { email, familles: [lien], familleIds: [familleRef.id] }, { merge: true });
-  await setDoc(doc(db, 'familles', familleRef.id, 'membres', userId), { userId, email, role: 'proprietaire' });
+  batch.set(doc(db, 'utilisateurs', userId), { email, familles: [lien], familleIds: [familleRef.id] }, { merge: true });
+  batch.set(doc(db, 'familles', familleRef.id, 'membres', userId), { userId, email, role: 'proprietaire' });
+  await batch.commit();
   return familleRef.id;
 }
 

@@ -1,4 +1,5 @@
 import { Globe2, LockKeyhole, Mail } from 'lucide-react';
+import { FirebaseError } from 'firebase/app';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
 import type { useAuth } from '../firebase/useAuth';
@@ -23,8 +24,18 @@ export function Connexion({ auth, firebaseReady }: Props) {
     try {
       if (mode === 'connexion') await auth.signIn(email, password);
       else await auth.signUp(email, password);
-    } catch {
-      setLocalError('Vérifie ton email et ton mot de passe.');
+    } catch (caught) {
+      if (caught instanceof FirebaseError) {
+        const messages: Record<string, string> = {
+          'auth/email-already-in-use': 'Cette adresse possède déjà un compte. Connecte-toi plutôt.',
+          'auth/weak-password': 'Choisis un mot de passe d’au moins 6 caractères.',
+          'auth/invalid-credential': 'Email ou mot de passe incorrect.',
+          'auth/invalid-email': 'Cette adresse email n’est pas valide.'
+        };
+        setLocalError(messages[caught.code] ?? caught.message);
+      } else {
+        setLocalError(caught instanceof Error ? caught.message : 'Opération impossible.');
+      }
     } finally {
       setSubmitting(false);
     }

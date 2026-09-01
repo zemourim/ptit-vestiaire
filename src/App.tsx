@@ -47,7 +47,9 @@ export function App() {
 
   if (familles.loading) return <CenteredMessage title="PtitVestiaire" message="Chargement de la famille..." />;
   if (familles.liens.length === 0) return <ConfigurationFamille userId={auth.user.uid} email={auth.user.email ?? ''} onCreated={() => window.location.reload()} />;
-  definirFamilleCourante(familles.liens[0].familleId);
+  useEffect(() => {
+    definirFamilleCourante(familles.liens[0]?.familleId ?? null);
+  }, [familles.liens]);
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#cffafe_0,#f8fafc_34%,#fff7ed_100%)] text-slate-950">
