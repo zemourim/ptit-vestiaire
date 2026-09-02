@@ -71,9 +71,11 @@ export function ConfigurationFamille({ userId, email, onCreated, onCancel }: Pro
                 {enfants.map((enfant, index) => (
                   <div key={index} className="flex gap-2">
                     <input value={enfant} onChange={(event) => setEnfants((items) => items.map((item, itemIndex) => itemIndex === index ? event.target.value : item))} placeholder="Prénom" className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-bold" />
-                    <button type="button" onClick={() => setEnfants((items) => items.filter((_, itemIndex) => itemIndex !== index))} className="rounded-2xl bg-rose-50 px-3 text-rose-600" aria-label={`Supprimer la ligne ${index + 1}`} title="Supprimer cette ligne">
-                      <Trash2 size={19} />
-                    </button>
+                    {enfants.length > 1 && (
+                      <button type="button" onClick={() => setEnfants((items) => items.filter((_, itemIndex) => itemIndex !== index))} className="rounded-2xl bg-rose-50 px-3 text-rose-600" aria-label={`Supprimer la ligne ${index + 1}`} title="Supprimer cette ligne">
+                        <Trash2 size={19} />
+                      </button>
+                    )}
                   </div>
                 ))}
                 <button type="button" onClick={() => setEnfants((items) => [...items, ''])} className="inline-flex items-center gap-2 rounded-2xl bg-slate-100 px-4 py-3 text-sm font-black text-slate-700">
