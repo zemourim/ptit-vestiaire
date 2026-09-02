@@ -31,7 +31,8 @@ service cloud.firestore {
       allow delete: if signedIn() && resource.data.proprietaireUserId == request.auth.uid;
       match /membres/{userId} {
         allow read: if member(familleId);
-        allow create: if memberAfter(familleId) || (request.auth.uid == userId && ownerAfter(familleId));
+        allow create: if request.auth.uid == userId
+          && (memberAfter(familleId) || ownerAfter(familleId));
         allow delete: if owner(familleId);
       }
     }
@@ -40,7 +41,15 @@ service cloud.firestore {
       allow read: if signedIn() && request.auth.uid == userId;
       allow create: if signedIn() && request.auth.uid == userId
         && request.resource.data.familleIds.size() == 1
-        && ownerAfter(request.resource.data.familleIds[0]);
+        && request.resource.data.familles.size() == 1
+        && request.resource.data.familles[0].familleId == request.resource.data.familleIds[0]
+        && (
+          (request.resource.data.familles[0].role == 'proprietaire'
+            && ownerAfter(request.resource.data.familleIds[0]))
+          || (request.resource.data.familles[0].role == 'invite'
+            && exists(/databases/$(database)/documents/invitations/$(request.resource.data.joinCode))
+            && get(/databases/$(database)/documents/invitations/$(request.resource.data.joinCode)).data.familleId == request.resource.data.familleIds[0])
+        );
       // L'appartenance ne change que via création, invitation exacte ou retrait propriétaire.
       allow update: if signedIn() && (
         (request.auth.uid == userId
