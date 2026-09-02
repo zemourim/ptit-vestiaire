@@ -141,7 +141,7 @@ export function GardeRobe() {
               {parFille[fille].filter((vetement) => vetement.statutActuel === 'sorti').length} sorti(s) sur {parFille[fille].length}
             </span>
           </div>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {parFille[fille].map((vetement) => (
               <CarteVetement
                 key={vetement.id}
