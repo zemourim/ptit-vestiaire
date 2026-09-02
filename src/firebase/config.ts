@@ -20,8 +20,3 @@ export const auth: Auth | null = app ? getAuth(app) : null;
 export const db: Firestore | null = app ? getFirestore(app) : null;
 export const storage: FirebaseStorage | null = app ? getStorage(app) : null;
 export const cloudFunctions: Functions | null = app ? getFunctions(app, 'us-central1') : null;
-
-export const allowedAdultEmails = String(import.meta.env.VITE_ALLOWED_EMAILS ?? '')
-  .split(',')
-  .map((email) => email.trim().toLowerCase())
-  .filter(Boolean);

@@ -1,6 +1,6 @@
 import { createUserWithEmailAndPassword, GoogleAuthProvider, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, signOut, type User } from 'firebase/auth';
-import { useEffect, useMemo, useState } from 'react';
-import { allowedAdultEmails, auth } from './config';
+import { useEffect, useState } from 'react';
+import { auth } from './config';
 
 type AuthState = {
   user: User | null;
@@ -30,11 +30,7 @@ export function useAuth(): AuthState {
     });
   }, []);
 
-  const isAllowed = useMemo(() => {
-    if (!user?.email) return false;
-    if (allowedAdultEmails.length === 0) return true;
-    return allowedAdultEmails.includes(user.email.toLowerCase());
-  }, [user]);
+  const isAllowed = Boolean(user);
 
   async function signIn(email: string, password: string) {
     if (!auth) {
@@ -44,12 +40,7 @@ export function useAuth(): AuthState {
 
     setError(null);
     try {
-      const credential = await signInWithEmailAndPassword(auth, email, password);
-      const signedEmail = credential.user.email?.toLowerCase() ?? '';
-      if (allowedAdultEmails.length > 0 && !allowedAdultEmails.includes(signedEmail)) {
-        await signOut(auth);
-        throw new Error('Ce compte n’est pas autorisé pour PtitVestiaire.');
-      }
+      await signInWithEmailAndPassword(auth, email, password);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Connexion impossible.');
       throw caught;
@@ -64,12 +55,7 @@ export function useAuth(): AuthState {
     if (!auth) throw new Error('Firebase n’est pas encore configuré.');
     setError(null);
     try {
-      const credential = await createUserWithEmailAndPassword(auth, email, password);
-      const signedEmail = credential.user.email?.toLowerCase() ?? '';
-      if (allowedAdultEmails.length > 0 && !allowedAdultEmails.includes(signedEmail)) {
-        await signOut(auth);
-        throw new Error('Cette adresse n’est pas autorisée.');
-      }
+      await createUserWithEmailAndPassword(auth, email, password);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Création du compte impossible.');
       throw caught;
@@ -80,12 +66,7 @@ export function useAuth(): AuthState {
     if (!auth) throw new Error('Firebase n’est pas encore configuré.');
     setError(null);
     try {
-      const credential = await signInWithPopup(auth, new GoogleAuthProvider());
-      const signedEmail = credential.user.email?.toLowerCase() ?? '';
-      if (allowedAdultEmails.length > 0 && !allowedAdultEmails.includes(signedEmail)) {
-        await signOut(auth);
-        throw new Error('Cette adresse Google n’est pas autorisée.');
-      }
+      await signInWithPopup(auth, new GoogleAuthProvider());
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Connexion Google impossible.');
       throw caught;
