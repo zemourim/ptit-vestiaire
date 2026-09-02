@@ -58,7 +58,9 @@ export function App() {
   if (familles.loading || (familleId && (familleLoading || familleActiveId !== familleId))) {
     return <CenteredMessage title="PtitVestiaire" message="Chargement de la famille..." />;
   }
-  if (familles.liens.length === 0) return <ConfigurationFamille userId={auth.user.uid} email={auth.user.email ?? ''} onCreated={() => window.location.reload()} />;
+  if (familles.liens.length === 0) {
+    return <ConfigurationFamille userId={auth.user.uid} email={auth.user.email ?? ''} onCreated={() => window.location.reload()} onCancel={auth.logOut} />;
+  }
   const enfants = famille?.enfants?.length ? famille.enfants : ['Enfant'];
 
   return (
