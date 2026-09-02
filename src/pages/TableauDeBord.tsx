@@ -1,13 +1,13 @@
 import { History, Loader2, LogIn, Shirt } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { HistoriqueVetement } from '../components/HistoriqueVetement';
-import { FILLES, filleStyles } from '../lib/constants';
+import { getFilleStyles } from '../lib/constants';
 import { daysSince, formatDate } from '../lib/dates';
 import { basculerStatut, useVetements } from '../firebase/useVetements';
 import { useSettings } from '../firebase/useSettings';
 import type { Fille, Vetement } from '../types';
 
-export function TableauDeBord() {
+export function TableauDeBord({ enfants }: { enfants: string[] }) {
   const { vetements, loading, error } = useVetements();
   const { settings } = useSettings();
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -21,16 +21,16 @@ export function TableauDeBord() {
 
   const byFille = useMemo(
     () =>
-      FILLES.reduce<Record<Fille, Vetement[]>>(
+      enfants.reduce<Record<Fille, Vetement[]>>(
         (acc, fille) => {
           acc[fille] = sortis
             .filter((vetement) => vetement.fille === fille)
             .sort((a, b) => (a.dateDernierMouvement?.toMillis() ?? 0) - (b.dateDernierMouvement?.toMillis() ?? 0));
           return acc;
         },
-        { Sanaa: [], Manelle: [] }
+        {}
       ),
-    [sortis]
+    [sortis, enfants]
   );
 
   async function marquerRentre(vetement: Vetement) {
@@ -59,10 +59,10 @@ export function TableauDeBord() {
       {loading && <p className="rounded-2xl bg-white p-4 font-bold text-slate-600">Chargement du catalogue...</p>}
 
       <div className="grid gap-5 lg:grid-cols-2">
-        {FILLES.map((fille) => (
+        {enfants.map((fille) => (
           <section key={fille} className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className={`text-2xl font-black ${filleStyles[fille].text}`}>{fille}</h3>
+              <h3 className={`text-2xl font-black ${getFilleStyles(fille).text}`}>{fille}</h3>
               <span className="rounded-full bg-white px-3 py-1 text-sm font-black text-slate-600 shadow-sm">
                 {byFille[fille].length} sorti(s)
               </span>

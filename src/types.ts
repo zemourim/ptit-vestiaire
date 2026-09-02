@@ -1,6 +1,6 @@
 import type { Timestamp } from 'firebase/firestore';
 
-export type Fille = 'Sanaa' | 'Manelle';
+export type Fille = string;
 export type StatutVetement = 'sorti' | 'revenu';
 export type OrigineMouvement = 'photo' | 'bouton_rapide';
 

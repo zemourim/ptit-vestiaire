@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { DEFAULT_ALERT_AFTER_DAYS } from '../lib/constants';
 import type { AppSettings } from '../types';
 import { db } from './config';
+import { familleIdCourante } from './familleCourante';
 
 const fallbackSettings: AppSettings = { alertAfterDays: DEFAULT_ALERT_AFTER_DAYS };
 
@@ -12,13 +13,14 @@ export function useSettings() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!db) {
+    const familleId = familleIdCourante();
+    if (!db || !familleId) {
       setLoading(false);
       return;
     }
 
     return onSnapshot(
-      doc(db, 'settings', 'global'),
+      doc(db, 'settings', familleId),
       (snapshot) => {
         const data = snapshot.data() as Partial<AppSettings> | undefined;
         setSettings({ alertAfterDays: data?.alertAfterDays ?? DEFAULT_ALERT_AFTER_DAYS });
@@ -38,7 +40,9 @@ export function useSettings() {
 
   async function updateSettings(nextSettings: AppSettings) {
     if (!db) throw new Error('Firebase n’est pas configuré.');
-    await setDoc(doc(db, 'settings', 'global'), nextSettings, { merge: true });
+    const familleId = familleIdCourante();
+    if (!familleId) throw new Error('Aucune famille active.');
+    await setDoc(doc(db, 'settings', familleId), { ...nextSettings, familleId }, { merge: true });
   }
 
   return { settings, loading, error, updateSettings };

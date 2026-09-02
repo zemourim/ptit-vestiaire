@@ -9,7 +9,7 @@ import { Reglages } from './pages/Reglages';
 import { TableauDeBord } from './pages/TableauDeBord';
 import { hasFirebaseConfig } from './firebase/config';
 import { useAuth } from './firebase/useAuth';
-import { useFamillesUtilisateur } from './firebase/useFamilles';
+import { useFamille, useFamillesUtilisateur } from './firebase/useFamilles';
 import { definirFamilleCourante } from './firebase/familleCourante';
 
 type Tab = 'dashboard' | 'garderobe' | 'nouvelle' | 'historique' | 'reglages';
@@ -26,11 +26,15 @@ export function App() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const auth = useAuth();
   const familles = useFamillesUtilisateur(auth.user?.uid ?? null);
+  const familleId = familles.liens[0]?.familleId ?? null;
+  const { famille, loading: familleLoading } = useFamille(familleId);
 
   useEffect(() => {
     const nextTab = window.location.hash.replace('#', '') as Tab;
     if (tabs.some((tab) => tab.id === nextTab)) setActiveTab(nextTab);
   }, []);
+
+  useEffect(() => definirFamilleCourante(familleId), [familleId]);
 
   function openTab(tab: Tab) {
     setActiveTab(tab);
@@ -45,11 +49,9 @@ export function App() {
     return <Connexion auth={auth} firebaseReady={hasFirebaseConfig} />;
   }
 
-  if (familles.loading) return <CenteredMessage title="PtitVestiaire" message="Chargement de la famille..." />;
+  if (familles.loading || (familleId && familleLoading)) return <CenteredMessage title="PtitVestiaire" message="Chargement de la famille..." />;
   if (familles.liens.length === 0) return <ConfigurationFamille userId={auth.user.uid} email={auth.user.email ?? ''} onCreated={() => window.location.reload()} />;
-  useEffect(() => {
-    definirFamilleCourante(familles.liens[0]?.familleId ?? null);
-  }, [familles.liens]);
+  const enfants = famille?.enfants?.length ? famille.enfants : ['Enfant'];
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#cffafe_0,#f8fafc_34%,#fff7ed_100%)] text-slate-950">
@@ -57,7 +59,7 @@ export function App() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.24em] text-slate-500">PtitVestiaire</p>
-            <h1 className="text-2xl font-black leading-tight">Sanaa & Manelle</h1>
+            <h1 className="text-2xl font-black leading-tight">{famille?.nom ?? 'Ma famille'}</h1>
           </div>
           <button
             type="button"
@@ -72,10 +74,10 @@ export function App() {
       </header>
 
       <main className="mx-auto max-w-6xl px-4 pb-28 pt-5 md:pb-8">
-        {activeTab === 'dashboard' && <TableauDeBord />}
-        {activeTab === 'garderobe' && <GardeRobe />}
-        {activeTab === 'nouvelle' && <NouvelleSortie userId={auth.user.uid} onCreated={() => openTab('dashboard')} />}
-        {activeTab === 'historique' && <Historique />}
+        {activeTab === 'dashboard' && <TableauDeBord enfants={enfants} />}
+        {activeTab === 'garderobe' && <GardeRobe enfants={enfants} />}
+        {activeTab === 'nouvelle' && <NouvelleSortie userId={auth.user.uid} enfants={enfants} onCreated={() => openTab('dashboard')} />}
+        {activeTab === 'historique' && <Historique enfants={enfants} />}
         {activeTab === 'reglages' && <Reglages userEmail={auth.user.email ?? ''} userId={auth.user.uid} />}
       </main>
 

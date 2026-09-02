@@ -1,7 +1,7 @@
 import { Archive, ArchiveRestore, History, Loader2, LogIn, LogOut, Shirt, Trash2 } from 'lucide-react';
 import { BadgeStatut } from './BadgeStatut';
 import { daysSince, formatDate, isLate } from '../lib/dates';
-import { filleStyles } from '../lib/constants';
+import { getFilleStyles } from '../lib/constants';
 import type { Vetement } from '../types';
 
 type Props = {
@@ -37,7 +37,7 @@ export function CarteVetement({ vetement, alertAfterDays, busy, onToggleStatut, 
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0">
             <p className="truncate text-lg font-black capitalize">{vetement.nom}</p>
-            <p className={`text-sm font-bold ${filleStyles[vetement.fille].text}`}>{vetement.fille}</p>
+            <p className={`text-sm font-bold ${getFilleStyles(vetement.fille).text}`}>{vetement.fille}</p>
           </div>
           <BadgeStatut statut={vetement.statutActuel} late={late} jours={jours} />
         </div>

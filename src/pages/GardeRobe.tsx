@@ -2,7 +2,7 @@ import { AlertTriangle, Search, Trash2, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { CarteVetement } from '../components/CarteVetement';
 import { HistoriqueVetement } from '../components/HistoriqueVetement';
-import { FILLES, filleStyles } from '../lib/constants';
+import { getFilleStyles } from '../lib/constants';
 import { normaliserNom } from '../lib/normalize';
 import { basculerStatut, definirActif, supprimerVetement, useVetements } from '../firebase/useVetements';
 import { useSettings } from '../firebase/useSettings';
@@ -10,7 +10,7 @@ import type { Fille, Vetement } from '../types';
 
 type FiltreFille = Fille | 'Toutes';
 
-export function GardeRobe() {
+export function GardeRobe({ enfants }: { enfants: string[] }) {
   const { vetements, loading, error } = useVetements();
   const { settings } = useSettings();
   const [filtre, setFiltre] = useState<FiltreFille>('Toutes');
@@ -33,14 +33,14 @@ export function GardeRobe() {
 
   const parFille = useMemo(
     () =>
-      FILLES.reduce<Record<Fille, Vetement[]>>(
+      enfants.reduce<Record<Fille, Vetement[]>>(
         (acc, fille) => {
           acc[fille] = visibles.filter((vetement) => vetement.fille === fille);
           return acc;
         },
-        { Sanaa: [], Manelle: [] }
+        {}
       ),
-    [visibles]
+    [visibles, enfants]
   );
 
   /** Un clic = un mouvement `bouton_rapide`. La liste se met à jour via onSnapshot, sans rechargement. */
@@ -91,7 +91,7 @@ export function GardeRobe() {
 
       <div className="space-y-3 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex gap-2 overflow-x-auto pb-1">
-          {(['Toutes', ...FILLES] as FiltreFille[]).map((item) => (
+          {(['Toutes', ...enfants] as FiltreFille[]).map((item) => (
             <button
               key={item}
               type="button"
@@ -133,10 +133,10 @@ export function GardeRobe() {
         </p>
       )}
 
-      {FILLES.filter((fille) => parFille[fille].length > 0).map((fille) => (
+      {enfants.filter((fille) => parFille[fille]?.length > 0).map((fille) => (
         <section key={fille} className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className={`text-2xl font-black ${filleStyles[fille].text}`}>{fille}</h3>
+            <h3 className={`text-2xl font-black ${getFilleStyles(fille).text}`}>{fille}</h3>
             <span className="rounded-full bg-white px-3 py-1 text-sm font-black text-slate-600 shadow-sm">
               {parFille[fille].filter((vetement) => vetement.statutActuel === 'sorti').length} sorti(s) sur {parFille[fille].length}
             </span>

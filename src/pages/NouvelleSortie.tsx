@@ -14,13 +14,14 @@ import type { Fille } from '../types';
 
 type Props = {
   userId: string;
+  enfants: string[];
   onCreated: () => void;
 };
 
 type TypeAjout = 'sortie' | 'catalogue';
 
-export function NouvelleSortie({ userId, onCreated }: Props) {
-  const [fille, setFille] = useState<Fille>('Sanaa');
+export function NouvelleSortie({ userId, enfants, onCreated }: Props) {
+  const [fille, setFille] = useState<Fille>(enfants[0]);
   const [typeAjout, setTypeAjout] = useState<TypeAjout>('sortie');
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
@@ -131,7 +132,7 @@ export function NouvelleSortie({ userId, onCreated }: Props) {
         <h2 className="mt-1 text-3xl font-black">Pour qui est cet ajout ?</h2>
       </section>
 
-      <SelecteurFille value={fille} onChange={setFille} />
+      <SelecteurFille value={fille} onChange={setFille} enfants={enfants} />
       <fieldset className="grid gap-3 sm:grid-cols-2">
         <legend className="mb-2 text-sm font-black text-slate-700">Quel type d’ajout ?</legend>
         <label className={`cursor-pointer rounded-3xl border-2 p-4 ${typeAjout === 'sortie' ? 'border-slate-950 bg-slate-950 text-white' : 'border-slate-200 bg-white'}`}>

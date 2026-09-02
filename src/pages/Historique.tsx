@@ -1,7 +1,7 @@
 import { Camera, MousePointerClick } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { HistoriqueVetement } from '../components/HistoriqueVetement';
-import { FILLES, filleStyles } from '../lib/constants';
+import { getFilleStyles } from '../lib/constants';
 import { formatDate } from '../lib/dates';
 import { useJournalMouvements } from '../firebase/useMouvements';
 import { useVetements } from '../firebase/useVetements';
@@ -9,7 +9,7 @@ import type { Fille, Vetement } from '../types';
 
 type Filter = Fille | 'Toutes';
 
-export function Historique() {
+export function Historique({ enfants }: { enfants: string[] }) {
   const [filter, setFilter] = useState<Filter>('Toutes');
   const { mouvements, loading, error } = useJournalMouvements(filter);
   const { vetements } = useVetements();
@@ -26,7 +26,7 @@ export function Historique() {
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-1">
-        {(['Toutes', ...FILLES] as Filter[]).map((item) => (
+        {(['Toutes', ...enfants] as Filter[]).map((item) => (
           <button
             key={item}
             type="button"
@@ -61,7 +61,7 @@ export function Historique() {
                 )}
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-lg font-black capitalize">{vetement?.nom ?? 'Vêtement supprimé'}</p>
-                  <p className={`text-sm font-bold ${filleStyles[mouvement.fille].text}`}>{mouvement.fille}</p>
+                  <p className={`text-sm font-bold ${getFilleStyles(mouvement.fille).text}`}>{mouvement.fille}</p>
                   <p className="mt-1 inline-flex items-center gap-1 text-sm font-bold text-slate-500">
                     {mouvement.origine === 'photo' ? <Camera size={14} /> : <MousePointerClick size={14} />}
                     {formatDate(mouvement.date)}

@@ -1,4 +1,4 @@
-import { addDoc, collection, deleteDoc, doc, getDoc, onSnapshot, query, setDoc, Timestamp, updateDoc, where, writeBatch } from 'firebase/firestore';
+import { arrayRemove, collection, doc, getDoc, onSnapshot, setDoc, Timestamp, updateDoc, writeBatch } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import type { Famille, LienFamille } from '../types';
 import { db } from './config';
@@ -24,6 +24,19 @@ export async function lireFamille(familleId: string): Promise<Famille | null> {
   return snapshot.exists() ? ({ id: snapshot.id, ...snapshot.data() } as Famille) : null;
 }
 
+export function useFamille(familleId: string | null) {
+  const [famille, setFamille] = useState<Famille | null>(null);
+  const [loading, setLoading] = useState(Boolean(familleId));
+  useEffect(() => {
+    if (!db || !familleId) { setFamille(null); setLoading(false); return; }
+    return onSnapshot(doc(db, 'familles', familleId), (snapshot) => {
+      setFamille(snapshot.exists() ? ({ id: snapshot.id, ...snapshot.data() } as Famille) : null);
+      setLoading(false);
+    });
+  }, [familleId]);
+  return { famille, loading };
+}
+
 export function useFamillesUtilisateur(userId: string | null) {
   const [liens, setLiens] = useState<LienFamille[]>([]);
   const [loading, setLoading] = useState(Boolean(userId));
@@ -40,22 +53,26 @@ export function useFamillesUtilisateur(userId: string | null) {
 export async function creerInvitation(familleId: string, createurUserId: string) {
   if (!db) throw new Error('Firebase n’est pas configuré.');
   const code = crypto.randomUUID().replaceAll('-', '').slice(0, 10).toUpperCase();
-  await addDoc(collection(db, 'invitations'), { code, familleId, createurUserId, dateCreation: Timestamp.now() });
+  await setDoc(doc(db, 'invitations', code), { code, familleId, createurUserId, dateCreation: Timestamp.now() });
   return code;
 }
 
 export async function rejoindreFamille(code: string, userId: string, email: string) {
   if (!db) throw new Error('Firebase n’est pas configuré.');
-  const { getDocs } = await import('firebase/firestore');
-  const result = await getDocs(query(collection(db, 'invitations'), where('code', '==', code.trim().toUpperCase())));
-  const invitation = result.docs[0]?.data();
-  if (!invitation?.familleId) throw new Error('Code d’invitation invalide.');
+  const normalizedCode = code.trim().toUpperCase();
+  const invitationRef = doc(db, 'invitations', normalizedCode);
+  const invitation = await getDoc(invitationRef);
+  const familleId = invitation.data()?.familleId as string | undefined;
+  if (!familleId) throw new Error('Code d’invitation invalide.');
   const userRef = doc(db, 'utilisateurs', userId);
   const existing = await getDoc(userRef);
-  const liens = ((existing.data()?.familles ?? []) as LienFamille[]).filter((lien) => lien.familleId !== invitation.familleId);
-  liens.push({ familleId: invitation.familleId, role: 'invite' });
-  await setDoc(userRef, { email, familles: liens, familleIds: liens.map((lien) => lien.familleId) }, { merge: true });
-  await setDoc(doc(db, 'familles', invitation.familleId, 'membres', userId), { userId, email, role: 'invite' });
+  const liens = ((existing.data()?.familles ?? []) as LienFamille[]).filter((lien) => lien.familleId !== familleId);
+  liens.push({ familleId, role: 'invite' });
+  const batch = writeBatch(db);
+  batch.set(userRef, { email, familles: liens, familleIds: liens.map((lien) => lien.familleId), joinCode: normalizedCode }, { merge: true });
+  batch.set(doc(db, 'familles', familleId, 'membres', userId), { userId, email, role: 'invite' });
+  batch.delete(invitationRef);
+  await batch.commit();
 }
 
 export async function modifierEnfants(familleId: string, enfants: string[]) {
@@ -74,8 +91,12 @@ export function useMembresFamille(familleId: string | null) {
 
 export async function retirerMembre(familleId: string, userId: string) {
   if (!db) throw new Error('Firebase n’est pas configuré.');
-  await deleteDoc(doc(db, 'familles', familleId, 'membres', userId));
-  const user = await getDoc(doc(db, 'utilisateurs', userId));
-  const liens = ((user.data()?.familles ?? []) as LienFamille[]).filter((lien) => lien.familleId !== familleId);
-  await setDoc(doc(db, 'utilisateurs', userId), { familles: liens, familleIds: liens.map((lien) => lien.familleId) }, { merge: true });
+  const batch = writeBatch(db);
+  batch.update(doc(db, 'utilisateurs', userId), {
+    familles: arrayRemove({ familleId, role: 'invite' }),
+    familleIds: arrayRemove(familleId),
+    removedFamilyId: familleId
+  });
+  batch.delete(doc(db, 'familles', familleId, 'membres', userId));
+  await batch.commit();
 }

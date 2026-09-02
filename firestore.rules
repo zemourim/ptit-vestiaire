@@ -11,50 +11,93 @@ service cloud.firestore {
         && familleId in get(/databases/$(database)/documents/utilisateurs/$(request.auth.uid)).data.familleIds;
     }
 
+    function owner(familleId) {
+      return signedIn() && get(/databases/$(database)/documents/familles/$(familleId)).data.proprietaireUserId == request.auth.uid;
+    }
+
+    function ownerAfter(familleId) {
+      return signedIn() && getAfter(/databases/$(database)/documents/familles/$(familleId)).data.proprietaireUserId == request.auth.uid;
+    }
+
+    function memberAfter(familleId) {
+      return signedIn()
+        && familleId in getAfter(/databases/$(database)/documents/utilisateurs/$(request.auth.uid)).data.familleIds;
+    }
+
     match /familles/{familleId} {
       allow read: if member(familleId);
       allow create: if signedIn() && request.resource.data.proprietaireUserId == request.auth.uid;
-      allow update: if member(familleId);
+      allow update: if member(familleId) && request.resource.data.proprietaireUserId == resource.data.proprietaireUserId;
       allow delete: if signedIn() && resource.data.proprietaireUserId == request.auth.uid;
       match /membres/{userId} {
         allow read: if member(familleId);
-        allow create: if member(familleId);
-        allow delete: if signedIn() && get(/databases/$(database)/documents/familles/$(familleId)).data.proprietaireUserId == request.auth.uid;
+        allow create: if memberAfter(familleId) || (request.auth.uid == userId && ownerAfter(familleId));
+        allow delete: if owner(familleId);
       }
     }
 
     match /utilisateurs/{userId} {
       allow read: if signedIn() && request.auth.uid == userId;
-      allow create: if signedIn() && request.auth.uid == userId;
-      allow update: if signedIn() && (request.auth.uid == userId ||
-        get(/databases/$(database)/documents/familles/$(request.resource.data.familleIds[0])).data.proprietaireUserId == request.auth.uid);
+      allow create: if signedIn() && request.auth.uid == userId
+        && request.resource.data.familleIds.size() == 1
+        && ownerAfter(request.resource.data.familleIds[0]);
+      // L'appartenance ne change que via création, invitation exacte ou retrait propriétaire.
+      allow update: if signedIn() && (
+        (request.auth.uid == userId
+          && request.resource.data.familleIds == resource.data.familleIds
+          && request.resource.data.familles == resource.data.familles)
+        || (request.auth.uid == userId
+          && request.resource.data.familleIds.size() == resource.data.familleIds.size() + 1
+          && request.resource.data.familles.size() == resource.data.familles.size() + 1
+          && request.resource.data.familleIds.hasAll(resource.data.familleIds)
+          && exists(/databases/$(database)/documents/invitations/$(request.resource.data.joinCode))
+          && !resource.data.familleIds.hasAny([get(/databases/$(database)/documents/invitations/$(request.resource.data.joinCode)).data.familleId])
+          && get(/databases/$(database)/documents/invitations/$(request.resource.data.joinCode)).data.familleId in request.resource.data.familleIds)
+        || (owner(request.resource.data.removedFamilyId)
+          && resource.data.familleIds.size() == request.resource.data.familleIds.size() + 1
+          && resource.data.familles.size() == request.resource.data.familles.size() + 1
+          && resource.data.familleIds.hasAll(request.resource.data.familleIds)
+          && resource.data.familleIds.hasAny([request.resource.data.removedFamilyId])
+          && !request.resource.data.familleIds.hasAny([request.resource.data.removedFamilyId]))
+      );
     }
 
     match /invitations/{invitationId} {
       allow create: if signedIn() && member(request.resource.data.familleId);
-      allow read: if signedIn();
-      allow update, delete: if signedIn() && member(resource.data.familleId);
+      allow get: if signedIn();
+      allow list: if false;
+      allow update: if signedIn() && member(resource.data.familleId);
+      // memberAfter autorise la consommation atomique du code lors de l'adhésion.
+      allow delete: if signedIn()
+        && (member(resource.data.familleId) || memberAfter(resource.data.familleId));
     }
 
     match /vetements/{vetementId} {
       allow read: if member(resource.data.familleId);
-      allow create, update: if member(request.resource.data.familleId);
+      allow create: if member(request.resource.data.familleId);
+      allow update: if member(resource.data.familleId)
+        && request.resource.data.familleId == resource.data.familleId;
       allow delete: if member(resource.data.familleId);
     }
 
     match /mouvements/{mouvementId} {
       allow read: if member(resource.data.familleId);
-      allow create, update: if member(request.resource.data.familleId);
+      allow create: if member(request.resource.data.familleId);
+      allow update: if member(resource.data.familleId)
+        && request.resource.data.familleId == resource.data.familleId;
       allow delete: if member(resource.data.familleId);
     }
 
     // Ancienne collection, conservée en lecture le temps de valider la migration.
     match /sorties/{sortieId} {
-      allow read, create, update, delete: if signedIn();
+      allow read, create, update, delete: if false;
     }
 
-    match /settings/{settingId} {
-      allow read, write: if signedIn();
+    match /settings/{familleId} {
+      allow read: if member(familleId);
+      allow create, update: if member(familleId)
+        && request.resource.data.familleId == familleId;
+      allow delete: if member(familleId);
     }
   }
 }
