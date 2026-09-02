@@ -33,7 +33,8 @@ service cloud.firestore {
         allow read: if member(familleId);
         allow create: if request.auth.uid == userId
           && (memberAfter(familleId) || ownerAfter(familleId));
-        allow delete: if owner(familleId);
+        allow delete: if owner(familleId)
+          && resource.data.role == 'invite';
       }
     }
 
@@ -63,6 +64,7 @@ service cloud.firestore {
           && !resource.data.familleIds.hasAny([get(/databases/$(database)/documents/invitations/$(request.resource.data.joinCode)).data.familleId])
           && get(/databases/$(database)/documents/invitations/$(request.resource.data.joinCode)).data.familleId in request.resource.data.familleIds)
         || (owner(request.resource.data.removedFamilyId)
+          && get(/databases/$(database)/documents/familles/$(request.resource.data.removedFamilyId)/membres/$(userId)).data.role == 'invite'
           && resource.data.familleIds.size() == request.resource.data.familleIds.size() + 1
           && resource.data.familles.size() == request.resource.data.familles.size() + 1
           && resource.data.familleIds.hasAll(request.resource.data.familleIds)

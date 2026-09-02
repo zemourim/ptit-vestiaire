@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
-import { doc, getDoc, getFirestore, serverTimestamp, setDoc, writeBatch } from 'firebase/firestore';
+import { arrayRemove, doc, getDoc, getFirestore, serverTimestamp, setDoc, writeBatch } from 'firebase/firestore';
 
 process.loadEnvFile('.env.multi-familles');
 const config = {
@@ -66,4 +66,19 @@ await invite.user.getIdToken(true);
 const famille = await getDoc(doc(invite.db, 'familles', familleId));
 if (!famille.exists()) throw new Error('Le parent invité ne peut pas lire la famille rejointe.');
 if ((await getDoc(invitationRef)).exists()) throw new Error('Le code n’a pas été consommé.');
+
+const attaque = writeBatch(invite.db);
+attaque.update(doc(invite.db, 'utilisateurs', proprietaire.user.uid), {
+  familles: arrayRemove({ familleId, role: 'proprietaire' }),
+  familleIds: arrayRemove(familleId),
+  removedFamilyId: familleId
+});
+attaque.delete(doc(invite.db, 'familles', familleId, 'membres', proprietaire.user.uid));
+try {
+  await attaque.commit();
+  throw new Error('Un invité a pu retirer le propriétaire.');
+} catch (error) {
+  if (error.message === 'Un invité a pu retirer le propriétaire.') throw error;
+}
 process.stdout.write(`Invitation validée pour ${invite.email} dans ${famille.data().nom}.\n`);
+process.stdout.write('Suppression du propriétaire par un invité refusée.\n');
