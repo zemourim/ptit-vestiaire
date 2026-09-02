@@ -26,9 +26,9 @@ export function CarteVetement({ vetement, alertAfterDays, busy, onToggleStatut, 
       } ${vetement.actif ? '' : 'opacity-60'}`}
     >
       {vetement.photoReference ? (
-        <img src={vetement.photoReference} alt={vetement.nom} className="h-44 w-full object-cover" loading="lazy" />
+        <img src={vetement.photoReference} alt={vetement.nom} className="h-28 w-full object-cover" loading="lazy" />
       ) : (
-        <div className="grid h-44 w-full place-items-center bg-slate-100 text-slate-400">
+        <div className="grid h-28 w-full place-items-center bg-slate-100 text-slate-400">
           <Shirt size={40} />
         </div>
       )}
