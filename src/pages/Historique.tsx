@@ -7,10 +7,10 @@ import { useJournalMouvements } from '../firebase/useMouvements';
 import { useVetements } from '../firebase/useVetements';
 import type { Fille, Vetement } from '../types';
 
-type Filter = Fille | 'Toutes';
+type Filter = Fille | 'Tout';
 
 export function Historique({ enfants }: { enfants: string[] }) {
-  const [filter, setFilter] = useState<Filter>('Toutes');
+  const [filter, setFilter] = useState<Filter>('Tout');
   const { mouvements, loading, error } = useJournalMouvements(filter);
   const { vetements } = useVetements();
   const [detail, setDetail] = useState<Vetement | null>(null);
@@ -26,7 +26,7 @@ export function Historique({ enfants }: { enfants: string[] }) {
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-1">
-        {(['Toutes', ...enfants] as Filter[]).map((item) => (
+        {(['Tout', ...enfants] as Filter[]).map((item) => (
           <button
             key={item}
             type="button"

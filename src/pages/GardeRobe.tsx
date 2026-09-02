@@ -8,12 +8,12 @@ import { basculerStatut, definirActif, supprimerVetement, useVetements } from '.
 import { useSettings } from '../firebase/useSettings';
 import type { Fille, Vetement } from '../types';
 
-type FiltreFille = Fille | 'Toutes';
+type FiltreFille = Fille | 'Tout';
 
 export function GardeRobe({ enfants }: { enfants: string[] }) {
   const { vetements, loading, error } = useVetements();
   const { settings } = useSettings();
-  const [filtre, setFiltre] = useState<FiltreFille>('Toutes');
+  const [filtre, setFiltre] = useState<FiltreFille>('Tout');
   const [recherche, setRecherche] = useState('');
   const [voirArchives, setVoirArchives] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -25,7 +25,7 @@ export function GardeRobe({ enfants }: { enfants: string[] }) {
     const cible = normaliserNom(recherche);
     return vetements.filter((vetement) => {
       if (!voirArchives && !vetement.actif) return false;
-      if (filtre !== 'Toutes' && vetement.fille !== filtre) return false;
+      if (filtre !== 'Tout' && vetement.fille !== filtre) return false;
       if (cible && !vetement.nomNormalise.includes(cible)) return false;
       return true;
     });
@@ -91,7 +91,7 @@ export function GardeRobe({ enfants }: { enfants: string[] }) {
 
       <div className="space-y-3 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex gap-2 overflow-x-auto pb-1">
-          {(['Toutes', ...enfants] as FiltreFille[]).map((item) => (
+          {(['Tout', ...enfants] as FiltreFille[]).map((item) => (
             <button
               key={item}
               type="button"

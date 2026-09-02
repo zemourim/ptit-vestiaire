@@ -69,9 +69,9 @@ export function useMouvementsVetement(vetementId: string | null) {
 }
 
 /** Journal global, éventuellement filtré par fille. */
-export function useJournalMouvements(fille: Fille | 'Toutes', maximum = 120) {
+export function useJournalMouvements(fille: Fille | 'Tout', maximum = 120) {
   const contraintes: QueryConstraint[] = [];
-  if (fille !== 'Toutes') contraintes.push(where('fille', '==', fille));
+  if (fille !== 'Tout') contraintes.push(where('fille', '==', fille));
   contraintes.push(orderBy('date', 'desc'), limitTo(maximum));
   return useFluxMouvements(contraintes, true, `journal:${fille}:${maximum}`);
 }
