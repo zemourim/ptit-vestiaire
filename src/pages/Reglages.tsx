@@ -2,7 +2,6 @@ import { Merge, Save } from 'lucide-react';
 import { GestionFamille } from '../components/GestionFamille';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
-import { allowedAdultEmails } from '../firebase/config';
 import { useSettings } from '../firebase/useSettings';
 import { fusionnerVetements, useVetements } from '../firebase/useVetements';
 
@@ -62,9 +61,6 @@ export function Reglages({ userEmail, userId }: Props) {
       <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
         <h3 className="text-lg font-black">Accès adulte</h3>
         <p className="mt-2 font-bold text-slate-600">Connecté avec {userEmail || 'un compte Firebase'}.</p>
-        <p className="mt-2 text-sm font-bold text-slate-500">
-          Comptes autorisés : {allowedAdultEmails.length > 0 ? allowedAdultEmails.join(', ') : 'tous les comptes créés dans Firebase Authentication'}.
-        </p>
       </section>
     </section>
   );
