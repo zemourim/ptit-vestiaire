@@ -10,7 +10,7 @@ import { TableauDeBord } from './pages/TableauDeBord';
 import { hasFirebaseConfig } from './firebase/config';
 import { useAuth } from './firebase/useAuth';
 import { useFamille, useFamillesUtilisateur } from './firebase/useFamilles';
-import { definirFamilleCourante } from './firebase/familleCourante';
+import { definirFamilleCourante, familleIdCourante } from './firebase/familleCourante';
 
 type Tab = 'dashboard' | 'garderobe' | 'nouvelle' | 'historique' | 'reglages';
 
@@ -28,13 +28,17 @@ export function App() {
   const familles = useFamillesUtilisateur(auth.user?.uid ?? null);
   const familleId = familles.liens[0]?.familleId ?? null;
   const { famille, loading: familleLoading } = useFamille(familleId);
+  const [familleActiveId, setFamilleActiveId] = useState<string | null>(() => familleIdCourante());
 
   useEffect(() => {
     const nextTab = window.location.hash.replace('#', '') as Tab;
     if (tabs.some((tab) => tab.id === nextTab)) setActiveTab(nextTab);
   }, []);
 
-  useEffect(() => definirFamilleCourante(familleId), [familleId]);
+  useEffect(() => {
+    definirFamilleCourante(familleId);
+    setFamilleActiveId(familleId);
+  }, [familleId]);
 
   function openTab(tab: Tab) {
     setActiveTab(tab);
@@ -49,7 +53,11 @@ export function App() {
     return <Connexion auth={auth} firebaseReady={hasFirebaseConfig} />;
   }
 
-  if (familles.loading || (familleId && familleLoading)) return <CenteredMessage title="PtitVestiaire" message="Chargement de la famille..." />;
+  // Les écrans Firestore ne sont montés qu'après initialisation de la famille active.
+  // Cela évite une première requête avec `__aucune__`, refusée à juste titre par les règles.
+  if (familles.loading || (familleId && (familleLoading || familleActiveId !== familleId))) {
+    return <CenteredMessage title="PtitVestiaire" message="Chargement de la famille..." />;
+  }
   if (familles.liens.length === 0) return <ConfigurationFamille userId={auth.user.uid} email={auth.user.email ?? ''} onCreated={() => window.location.reload()} />;
   const enfants = famille?.enfants?.length ? famille.enfants : ['Enfant'];
 
