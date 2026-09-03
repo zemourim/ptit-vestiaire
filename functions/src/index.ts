@@ -1,9 +1,13 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
+import { db, requireMember } from './server.js';
+export { creerInvitation, enregistrerAjoutVetements, fusionnerVetements, rejoindreFamille, retirerMembre, supprimerVetement } from './catalogue.js';
+export { creerSessionCheckout, creerSessionPortail, stripeWebhook, verifierAbonnements } from './billing.js';
 
 type AnalyzeRequest = {
   imageBase64?: string;
   mimeType?: string;
+  familleId?: string;
 };
 
 const acceptedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'] as const;
@@ -26,6 +30,12 @@ export const analyzeVetements = onCall<AnalyzeRequest>({ secrets: ['ANTHROPIC_AP
   if (!request.auth) {
     throw new HttpsError('unauthenticated', 'Connecte-toi pour analyser une photo.');
   }
+
+  const familleId = request.data.familleId?.trim();
+  if (!familleId) throw new HttpsError('invalid-argument', 'Famille manquante.');
+  await requireMember(request, familleId);
+  const family = await db.doc(`familles/${familleId}`).get();
+  if (family.get('plan') !== 'payant') throw new HttpsError('permission-denied', 'La reconnaissance IA est réservée à la formule payante.');
 
   const { imageBase64, mimeType } = request.data;
   if (!imageBase64 || !mimeType || !acceptedMimeTypes.includes(mimeType as (typeof acceptedMimeTypes)[number])) {

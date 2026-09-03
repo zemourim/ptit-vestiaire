@@ -1,8 +1,6 @@
 import {
   collection,
-  deleteDoc,
   doc,
-  getDocs,
   onSnapshot,
   orderBy,
   query,
@@ -16,9 +14,7 @@ import { normaliserNom, SEUIL_SUGGESTION, similarite } from '../lib/normalize';
 import type { Fille, StatutVetement, Vetement } from '../types';
 import { db } from './config';
 import { familleIdCourante } from './familleCourante';
-
-/** Firestore refuse un batch de plus de 500 écritures. */
-const TAILLE_BATCH = 400;
+import { appelerFonction } from './useSubscription';
 
 function messageErreur(caught: { code?: string; message?: string }) {
   return caught.code === 'permission-denied'
@@ -136,8 +132,9 @@ export async function definirActif(vetementId: string, actif: boolean) {
  * familial. L'historique global les affiche alors comme « Vêtement supprimé ».
  */
 export async function supprimerVetement(vetementId: string) {
-  if (!db) throw new Error('Firebase n’est pas configuré.');
-  await deleteDoc(doc(db, 'vetements', vetementId));
+  const familleId = familleIdCourante();
+  if (!familleId) throw new Error('Aucune famille sélectionnée.');
+  await appelerFonction('supprimerVetement', { familleId, vetementId });
 }
 
 /**
@@ -146,34 +143,9 @@ export async function supprimerVetement(vetementId: string) {
  * la cible est recalculé à partir du mouvement le plus récent des deux.
  */
 export async function fusionnerVetements(sourceId: string, cibleId: string) {
-  if (!db) throw new Error('Firebase n’est pas configuré.');
   if (sourceId === cibleId) throw new Error('Choisis deux vêtements différents.');
-  const firestore = db;
-
-  const [source, cible] = await Promise.all([
-    getDocs(query(collection(firestore, 'mouvements'), where('familleId', '==', familleIdCourante() ?? '__aucune__'), where('vetementId', '==', sourceId))),
-    getDocs(query(collection(firestore, 'mouvements'), where('familleId', '==', familleIdCourante() ?? '__aucune__'), where('vetementId', '==', cibleId)))
-  ]);
-
-  for (let debut = 0; debut < source.docs.length; debut += TAILLE_BATCH) {
-    const batch = writeBatch(firestore);
-    source.docs.slice(debut, debut + TAILLE_BATCH).forEach((mouvement) => {
-      batch.update(mouvement.ref, { vetementId: cibleId });
-    });
-    await batch.commit();
-  }
-
-  const tous = [...source.docs, ...cible.docs]
-    .map((item) => ({ id: item.id, ...item.data() }) as { id: string; date: Timestamp; statut: StatutVetement })
-    .sort((a, b) => b.date.toMillis() - a.date.toMillis());
-  const dernier = tous[0] ?? null;
-
-  await updateDoc(doc(firestore, 'vetements', cibleId), {
-    statutActuel: dernier?.statut ?? 'revenu',
-    dernierMouvementId: dernier?.id ?? null,
-    dateDernierMouvement: dernier?.date ?? null
-  });
-
-  await deleteDoc(doc(firestore, 'vetements', sourceId));
-  return source.docs.length;
+  const familleId = familleIdCourante();
+  if (!familleId) throw new Error('Aucune famille sélectionnée.');
+  const result = await appelerFonction<{ familleId: string; sourceId: string; cibleId: string }, { deplaces: number }>('fusionnerVetements', { familleId, sourceId, cibleId });
+  return result.deplaces;
 }

@@ -126,7 +126,67 @@ Un clic sur ce bouton, sans photo ni formulaire :
 2. si le vêtement rentre, complète la `dateRetour` du mouvement de sortie correspondant, pour que l'historique montre la durée réelle ;
 3. met à jour `statutActuel`, `dernierMouvementId` et `dateDernierMouvement` sur le vêtement.
 
-Ces écritures partent dans un seul batch Firestore : le catalogue ne peut jamais pointer vers un mouvement inexistant. Le badge et la couleur de la carte changent immédiatement, sans rechargement de page, grâce à l'abonnement `onSnapshot`. L'origine de chaque changement reste visible dans l'historique du vêtement : icône appareil photo pour une sortie photographiée, icône curseur pour un changement rapide.
+Ces écritures sont atomiques : le catalogue ne peut jamais pointer vers un mouvement inexistant. La création passe par une Cloud Function afin d’appliquer les quotas sans possibilité de contournement depuis le navigateur. Le badge et la couleur de la carte changent immédiatement, sans rechargement de page, grâce à l'abonnement `onSnapshot`.
+
+## Formules et abonnements Stripe
+
+Toute famille nouvelle commence avec `plan: "gratuit"`. Pour la compatibilité, l’absence de champ `plan` sur une ancienne famille est également interprétée comme la formule gratuite.
+
+| Fonction | Gratuite | Payante |
+| --- | --- | --- |
+| Enfants actifs | 1 | Illimités |
+| Vêtements actifs | 20 | Illimités |
+| Historique | 30 jours | Illimité |
+| Identification | Saisie manuelle | Saisie et reconnaissance IA |
+| Membres invités actifs | 1 | Illimités |
+| Photo de référence | 1 champ par vêtement | 1 champ par vêtement |
+| Prix | 0 € | 2,99 €/mois ou 24,99 €/an |
+
+Les contrôles sensibles sont effectués côté serveur : les créations de vêtements et les invitations passent par des fonctions appelables, l’IA vérifie le plan et l’appartenance, les règles interdisent au client de modifier les champs Stripe ou les compteurs, et les lectures d’historique gratuit sont limitées aux 30 derniers jours. Après une rétrogradation, les enfants après le premier, les vêtements après le vingtième et les invités après le premier sont conservés mais marqués archivés/bloqués ; ils sont réactivés après un nouveau paiement.
+
+Cycle automatique : Checkout crée l’abonnement ; `invoice.paid` active ou renouvelle la formule, remet les compteurs de rappel à zéro et envoie une confirmation ; la tâche quotidienne rappelle une échéance annuelle à J-21 puis J-7, ou une échéance mensuelle à J-3 ; `invoice.payment_failed` démarre un délai de grâce de 7 jours (annuel) ou 3 jours (mensuel) ; sans régularisation, la famille repasse en gratuit et reçoit un dernier email. Le portail client Stripe permet de modifier le moyen de paiement ou d’annuler. Les webhooks sont dédupliqués par identifiant d’événement.
+
+### Configuration Stripe, emails et Scheduler
+
+1. Utilise d’abord une clé Stripe **de test** et crée le produit ainsi que les deux prix :
+
+   ```bash
+   cd functions
+   STRIPE_SECRET_KEY=sk_test_... npm run stripe:setup
+   ```
+
+   Le script refuse volontairement une clé live et affiche les deux identifiants `price_...`.
+2. Configure les secrets des fonctions, sans jamais les préfixer par `VITE_` ni les placer dans le client :
+
+   ```bash
+   firebase functions:secrets:set STRIPE_SECRET_KEY
+   firebase functions:secrets:set STRIPE_WEBHOOK_SECRET
+   firebase functions:secrets:set STRIPE_PRICE_MONTHLY
+   firebase functions:secrets:set STRIPE_PRICE_ANNUAL
+   firebase functions:secrets:set RESEND_API_KEY
+   firebase functions:secrets:set APP_PUBLIC_URL
+   firebase functions:secrets:set EMAIL_FROM
+   ```
+
+   `APP_PUBLIC_URL` doit contenir l’origine publique autorisée et `EMAIL_FROM` une identité validée chez Resend, par exemple `PtitVestiaire <contact@domaine-valide.fr>`.
+3. Déploie les règles, index, Storage et fonctions :
+
+   ```bash
+   firebase use ptit-vestiaire-multifamilles
+   firebase deploy --only firestore:rules,firestore:indexes,storage,functions
+   ```
+
+   Le déploiement de `verifierAbonnements` crée automatiquement le job Cloud Scheduler quotidien. Le projet Firebase doit être sur Blaze ; Cloud Scheduler et l’envoi d’emails peuvent générer des coûts selon les quotas des fournisseurs.
+4. Dans Stripe Developers → Webhooks, ajoute l’URL HTTPS de `stripeWebhook` déployée en `europe-west1` et sélectionne : `checkout.session.completed`, `invoice.paid`, `invoice.payment_failed`, `customer.subscription.updated`, `customer.subscription.deleted`. Copie son secret de signature dans `STRIPE_WEBHOOK_SECRET`. Active et configure aussi le Customer Portal.
+
+### Test complet en mode test
+
+- Lance `npm test` dans `functions/` pour vérifier les seuils de rappel et les délais de grâce.
+- Utilise Stripe CLI pour transmettre les webhooks à la fonction locale ou déployée, puis paie Checkout avec `4242 4242 4242 4242`.
+- Vérifie dans `familles/{id}` le passage à `plan: "payant"`, les identifiants Stripe, la fréquence et la prochaine échéance.
+- Simule `invoice.payment_failed`, avance `echecPaiementLe` dans une famille de test au-delà du délai de grâce, puis exécute la tâche planifiée depuis Google Cloud Scheduler. Vérifie `plan: "gratuit"`, `statutAbonnement: "expire"` et les drapeaux `bloqueParPlan`.
+- Simule ensuite `invoice.paid` et vérifie que toutes les données archivées par le plan redeviennent actives.
+- Ne passe en clés Stripe live qu’après validation des prix, emails, taxes, pages contractuelles et du parcours d’annulation.
 
 ## Fonctionnalités livrées
 

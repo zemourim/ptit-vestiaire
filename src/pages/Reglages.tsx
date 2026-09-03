@@ -1,18 +1,21 @@
 import { KeyRound, Merge, Save } from 'lucide-react';
 import { GestionFamille } from '../components/GestionFamille';
+import { Abonnement } from '../components/Abonnement';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
 import { useSettings } from '../firebase/useSettings';
 import { fusionnerVetements, useVetements } from '../firebase/useVetements';
+import type { Famille } from '../types';
 
 type Props = {
   userEmail: string;
   userId: string;
+  famille: Famille;
   hasPasswordProvider: boolean;
   onChangePassword: (currentPassword: string, newPassword: string) => Promise<void>;
 };
 
-export function Reglages({ userEmail, userId, hasPasswordProvider, onChangePassword }: Props) {
+export function Reglages({ userEmail, userId, famille, hasPasswordProvider, onChangePassword }: Props) {
   const { settings, error, updateSettings } = useSettings();
   const [alertAfterDays, setAlertAfterDays] = useState(settings.alertAfterDays);
   const [message, setMessage] = useState<string | null>(null);
@@ -57,6 +60,7 @@ export function Reglages({ userEmail, userId, hasPasswordProvider, onChangePassw
         {(message || error) && <p className="mt-3 text-sm font-bold text-slate-600">{message ?? error}</p>}
       </form>
 
+      <Abonnement famille={famille} userId={userId} />
       <FusionDoublons />
       <GestionFamille userId={userId} />
 
@@ -76,6 +80,7 @@ export function Reglages({ userEmail, userId, hasPasswordProvider, onChangePassw
           <a href="#a-propos" className="underline">Qui sommes-nous ?</a>
           <a href="#faq" className="underline">FAQ</a>
           <a href="#cgu" className="underline">Conditions d’utilisation</a>
+          <a href="#cgv" className="underline">Conditions de vente</a>
           <a href="#confidentialite" className="underline">Confidentialité</a>
           <a href="#cookies" className="underline">Cookies</a>
           <a href="#mentions-legales" className="underline">Mentions légales</a>

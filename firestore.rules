@@ -12,7 +12,9 @@ service cloud.firestore {
 
     function member(familleId) {
       return verified()
-        && familleId in get(/databases/$(database)/documents/utilisateurs/$(request.auth.uid)).data.familleIds;
+        && exists(/databases/$(database)/documents/familles/$(familleId)/membres/$(request.auth.uid))
+        && (!get(/databases/$(database)/documents/familles/$(familleId)/membres/$(request.auth.uid)).data.keys().hasAny(['bloqueParPlan'])
+          || get(/databases/$(database)/documents/familles/$(familleId)/membres/$(request.auth.uid)).data.bloqueParPlan != true);
     }
 
     function owner(familleId) {
@@ -23,22 +25,52 @@ service cloud.firestore {
       return verified() && getAfter(/databases/$(database)/documents/familles/$(familleId)).data.proprietaireUserId == request.auth.uid;
     }
 
-    function memberAfter(familleId) {
-      return verified()
-        && familleId in getAfter(/databases/$(database)/documents/utilisateurs/$(request.auth.uid)).data.familleIds;
+    function paid(familleId) {
+      return get(/databases/$(database)/documents/familles/$(familleId)).data.keys().hasAny(['plan'])
+        && get(/databases/$(database)/documents/familles/$(familleId)).data.plan == 'payant';
     }
 
     match /familles/{familleId} {
       allow read: if member(familleId);
-      allow create: if verified() && request.resource.data.proprietaireUserId == request.auth.uid;
-      allow update: if member(familleId) && request.resource.data.proprietaireUserId == resource.data.proprietaireUserId;
-      allow delete: if verified() && resource.data.proprietaireUserId == request.auth.uid;
+      allow create: if verified()
+        && request.resource.data.proprietaireUserId == request.auth.uid
+        && request.resource.data.plan == 'gratuit'
+        && request.resource.data.enfants.size() == 1
+        && request.resource.data.stripeCustomerId == null
+        && request.resource.data.stripeSubscriptionId == null
+        && request.resource.data.frequencePaiement == null
+        && request.resource.data.dateDebutAbonnement == null
+        && request.resource.data.dateProchainRenouvellement == null
+        && request.resource.data.nombreRappelsEnvoyes == 0
+        && request.resource.data.statutAbonnement == null
+        && request.resource.data.nombreVetements == 0
+        && request.resource.data.echecPaiementLe == null
+        && request.resource.data.keys().hasOnly([
+          'nom', 'enfants', 'dateCreation', 'proprietaireUserId', 'plan',
+          'stripeCustomerId', 'stripeSubscriptionId', 'frequencePaiement',
+          'dateDebutAbonnement', 'dateProchainRenouvellement', 'nombreRappelsEnvoyes',
+          'statutAbonnement', 'nombreVetements', 'echecPaiementLe'
+        ]);
+      // Le client ne peut jamais s'auto-attribuer un abonnement ni modifier les compteurs.
+      allow update: if member(familleId)
+        && request.resource.data.proprietaireUserId == resource.data.proprietaireUserId
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+          'plan', 'stripeCustomerId', 'stripeSubscriptionId', 'frequencePaiement',
+          'dateDebutAbonnement', 'dateProchainRenouvellement', 'nombreRappelsEnvoyes',
+          'rappelsEnvoyesCycle', 'statutAbonnement', 'nombreVetements', 'echecPaiementLe'
+        ])
+        && ((resource.data.keys().hasAny(['plan']) && resource.data.plan == 'payant')
+          || request.resource.data.enfants.size() <= 1);
+      // La suppression d'une famille devra passer par un flux serveur qui résilie aussi Stripe.
+      allow delete: if false;
       match /membres/{userId} {
-        allow read: if member(familleId);
+        allow read: if member(familleId) || owner(familleId);
+        // Seul le membre propriétaire est créé depuis le client, atomiquement avec sa famille.
         allow create: if request.auth.uid == userId
-          && (memberAfter(familleId) || ownerAfter(familleId));
-        allow delete: if owner(familleId)
-          && resource.data.role == 'invite';
+          && ownerAfter(familleId)
+          && request.resource.data.role == 'proprietaire';
+        allow update: if false;
+        allow delete: if false;
       }
     }
 
@@ -48,56 +80,36 @@ service cloud.firestore {
         && request.resource.data.familleIds.size() == 1
         && request.resource.data.familles.size() == 1
         && request.resource.data.familles[0].familleId == request.resource.data.familleIds[0]
-        && (
-          (request.resource.data.familles[0].role == 'proprietaire'
-            && ownerAfter(request.resource.data.familleIds[0]))
-          || (request.resource.data.familles[0].role == 'invite'
-            && exists(/databases/$(database)/documents/invitations/$(request.resource.data.joinCode))
-            && get(/databases/$(database)/documents/invitations/$(request.resource.data.joinCode)).data.familleId == request.resource.data.familleIds[0])
-        );
-      // L'appartenance ne change que via création, invitation exacte ou retrait propriétaire.
-      allow update: if verified() && (
-        (request.auth.uid == userId
+        && request.resource.data.familles[0].role == 'proprietaire'
+        && ownerAfter(request.resource.data.familleIds[0]);
+      // L'appartenance ne change ensuite que via les fonctions serveur d'invitation ou le retrait propriétaire.
+      allow update: if verified()
+        && request.auth.uid == userId
           && request.resource.data.familleIds == resource.data.familleIds
-          && request.resource.data.familles == resource.data.familles)
-        || (request.auth.uid == userId
-          && request.resource.data.familleIds.size() == resource.data.familleIds.size() + 1
-          && request.resource.data.familles.size() == resource.data.familles.size() + 1
-          && request.resource.data.familleIds.hasAll(resource.data.familleIds)
-          && exists(/databases/$(database)/documents/invitations/$(request.resource.data.joinCode))
-          && !resource.data.familleIds.hasAny([get(/databases/$(database)/documents/invitations/$(request.resource.data.joinCode)).data.familleId])
-          && get(/databases/$(database)/documents/invitations/$(request.resource.data.joinCode)).data.familleId in request.resource.data.familleIds)
-        || (owner(request.resource.data.removedFamilyId)
-          && get(/databases/$(database)/documents/familles/$(request.resource.data.removedFamilyId)/membres/$(userId)).data.role == 'invite'
-          && resource.data.familleIds.size() == request.resource.data.familleIds.size() + 1
-          && resource.data.familles.size() == request.resource.data.familles.size() + 1
-          && resource.data.familleIds.hasAll(request.resource.data.familleIds)
-          && resource.data.familleIds.hasAny([request.resource.data.removedFamilyId])
-          && !request.resource.data.familleIds.hasAny([request.resource.data.removedFamilyId]))
-      );
+          && request.resource.data.familles == resource.data.familles;
     }
 
     match /invitations/{invitationId} {
-      allow create: if verified() && member(request.resource.data.familleId);
-      allow get: if verified();
-      allow list: if false;
-      allow update: if verified() && member(resource.data.familleId);
-      // memberAfter autorise la consommation atomique du code lors de l'adhésion.
-      allow delete: if verified()
-        && (member(resource.data.familleId) || memberAfter(resource.data.familleId));
+      // Création et consommation exclusivement côté serveur pour appliquer la limite d'invités.
+      allow read, create, update, delete: if false;
     }
 
     match /vetements/{vetementId} {
       allow read: if member(resource.data.familleId);
-      allow create: if member(request.resource.data.familleId);
+      // La création et la suppression passent par des fonctions serveur qui comptent les vêtements.
+      allow create, delete: if false;
       allow update: if member(resource.data.familleId)
-        && request.resource.data.familleId == resource.data.familleId;
-      allow delete: if member(resource.data.familleId);
+        && (!resource.data.keys().hasAny(['bloqueParPlan']) || resource.data.bloqueParPlan != true)
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['familleId', 'bloqueParPlan']);
     }
 
     match /mouvements/{mouvementId} {
-      allow read: if member(resource.data.familleId);
-      allow create: if member(request.resource.data.familleId);
+      allow read: if member(resource.data.familleId)
+        && (paid(resource.data.familleId)
+          || resource.data.date >= request.time - duration.value(30, 'd'));
+      allow create: if member(request.resource.data.familleId)
+        && request.resource.data.date >= request.time - duration.value(5, 'm')
+        && request.resource.data.date <= request.time + duration.value(5, 'm');
       allow update: if member(resource.data.familleId)
         && request.resource.data.familleId == resource.data.familleId;
       allow delete: if member(resource.data.familleId);

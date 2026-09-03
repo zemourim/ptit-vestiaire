@@ -10,17 +10,20 @@ import { analyzePhoto } from '../firebase/analyzePhoto';
 import { enregistrerAjoutCataloguePhoto, enregistrerSortiePhoto, type EntreeSortie } from '../firebase/useMouvements';
 import { useVetements } from '../firebase/useVetements';
 import { uploadSortiePhoto } from '../firebase/useStorage';
-import type { Fille } from '../types';
+import { familleIdCourante } from '../firebase/familleCourante';
+import { UpgradeNotice } from '../components/UpgradeNotice';
+import type { Famille, Fille } from '../types';
 
 type Props = {
   userId: string;
   enfants: string[];
+  famille: Famille;
   onCreated: () => void;
 };
 
 type TypeAjout = 'sortie' | 'catalogue';
 
-export function NouvelleSortie({ userId, enfants, onCreated }: Props) {
+export function NouvelleSortie({ userId, enfants, famille, onCreated }: Props) {
   const [fille, setFille] = useState<Fille>(enfants[0]);
   const [typeAjout, setTypeAjout] = useState<TypeAjout>('sortie');
   const [photo, setPhoto] = useState<File | null>(null);
@@ -59,7 +62,10 @@ export function NouvelleSortie({ userId, enfants, onCreated }: Props) {
     setAnalyzing(true);
     setError(null);
     try {
-      const suggestions = await analyzePhoto(photoDataUrl);
+      if (famille.plan !== 'payant') throw new Error('La reconnaissance IA est réservée à la formule payante.');
+      const familleId = familleIdCourante();
+      if (!familleId) throw new Error('Aucune famille sélectionnée.');
+      const suggestions = await analyzePhoto(photoDataUrl, familleId);
       setVetements((current) => Array.from(new Set([...current, ...suggestions.map((item) => item.toLowerCase())])));
     } catch (caught) {
       if (caught instanceof FirebaseError) {
@@ -102,6 +108,12 @@ export function NouvelleSortie({ userId, enfants, onCreated }: Props) {
       return;
     }
 
+    const nombreNouveaux = entrees.filter((entree) => !entree.vetementId).length;
+    if (famille.plan !== 'payant' && catalogue.length + nombreNouveaux > 20) {
+      setError('La formule gratuite est limitée à 20 vêtements. Passe à la formule payante pour en ajouter davantage.');
+      return;
+    }
+
     setSaving(true);
     try {
       const { photoUrl } = await uploadSortiePhoto(photo, userId, fille);
@@ -133,6 +145,7 @@ export function NouvelleSortie({ userId, enfants, onCreated }: Props) {
       </section>
 
       <SelecteurFille value={fille} onChange={setFille} enfants={enfants} />
+      {famille.plan !== 'payant' && <p className="rounded-2xl bg-white p-3 text-sm font-bold text-slate-600">Garde-robe gratuite : {catalogue.length}/20 vêtements.</p>}
       <fieldset className="grid gap-3 sm:grid-cols-2">
         <legend className="mb-2 text-sm font-black text-slate-700">Quel type d’ajout ?</legend>
         <label className={`cursor-pointer rounded-3xl border-2 p-4 ${typeAjout === 'sortie' ? 'border-slate-950 bg-slate-950 text-white' : 'border-slate-200 bg-white'}`}>
@@ -150,17 +163,19 @@ export function NouvelleSortie({ userId, enfants, onCreated }: Props) {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-lg font-black">Vêtements visibles</h3>
-            <p className="text-sm font-bold text-slate-500">L’IA peut proposer une liste, tu gardes la main.</p>
+            <p className="text-sm font-bold text-slate-500">Ajoute les vêtements manuellement{famille.plan === 'payant' ? ' ou utilise la suggestion par IA' : ''}.</p>
           </div>
-          <button
-            type="button"
-            onClick={() => void handleAnalyze()}
-            disabled={!photoDataUrl || analyzing}
-            className="inline-flex items-center gap-2 rounded-full bg-cyan-100 px-4 py-2 text-sm font-black text-cyan-800 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
-          >
-            <Sparkles size={16} /> {analyzing ? 'Analyse...' : 'Analyser'}
-          </button>
+          {famille.plan === 'payant' && <button
+              type="button"
+              onClick={() => void handleAnalyze()}
+              disabled={!photoDataUrl || analyzing}
+              className="inline-flex items-center gap-2 rounded-full bg-cyan-100 px-4 py-2 text-sm font-black text-cyan-800 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+            >
+              <Sparkles size={16} /> {analyzing ? 'Analyse...' : 'Analyser'}
+            </button>}
         </div>
+
+        {famille.plan !== 'payant' && <div className="mt-3"><UpgradeNotice>La reconnaissance automatique par IA est réservée à la formule payante.</UpgradeNotice></div>}
 
         <div className="mt-4 flex gap-2">
           <input

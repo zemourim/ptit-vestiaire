@@ -1,20 +1,18 @@
 import {
   collection,
-  doc,
   limit as limitTo,
   onSnapshot,
   orderBy,
   query,
   type QueryConstraint,
   Timestamp,
-  where,
-  writeBatch
+  where
 } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
-import { normaliserNom } from '../lib/normalize';
 import type { Fille, Mouvement } from '../types';
 import { db } from './config';
 import { familleIdCourante } from './familleCourante';
+import { appelerFonction } from './useSubscription';
 
 function messageErreur(caught: { code?: string; message?: string }) {
   return caught.code === 'permission-denied'
@@ -60,20 +58,26 @@ function useFluxMouvements(contraintes: QueryConstraint[], actif: boolean, cle: 
 }
 
 /** Historique complet d'un vêtement, du plus récent au plus ancien. */
-export function useMouvementsVetement(vetementId: string | null) {
+export function useMouvementsVetement(vetementId: string | null, historiqueIllimite = false) {
+  const [depuis] = useState(() => Timestamp.fromMillis(Date.now() - 30 * 86_400_000));
+  const contraintes: QueryConstraint[] = [where('vetementId', '==', vetementId ?? '__aucun__')];
+  if (!historiqueIllimite) contraintes.push(where('date', '>=', depuis));
+  contraintes.push(orderBy('date', 'desc'));
   return useFluxMouvements(
-    [where('vetementId', '==', vetementId ?? '__aucun__'), orderBy('date', 'desc')],
+    contraintes,
     Boolean(vetementId),
-    `vetement:${vetementId}`
+    `vetement:${vetementId}:${historiqueIllimite}`
   );
 }
 
 /** Journal global, éventuellement filtré par fille. */
-export function useJournalMouvements(fille: Fille | 'Tout', maximum = 120) {
+export function useJournalMouvements(fille: Fille | 'Tout', maximum = 120, historiqueIllimite = false) {
+  const [depuis] = useState(() => Timestamp.fromMillis(Date.now() - 30 * 86_400_000));
   const contraintes: QueryConstraint[] = [];
   if (fille !== 'Tout') contraintes.push(where('fille', '==', fille));
+  if (!historiqueIllimite) contraintes.push(where('date', '>=', depuis));
   contraintes.push(orderBy('date', 'desc'), limitTo(maximum));
-  return useFluxMouvements(contraintes, true, `journal:${fille}:${maximum}`);
+  return useFluxMouvements(contraintes, true, `journal:${fille}:${maximum}:${historiqueIllimite}`);
 }
 
 export type EntreeSortie = {
@@ -89,55 +93,10 @@ export type EntreeSortie = {
  * soit rien ne l'est.
  */
 export async function enregistrerSortiePhoto(fille: Fille, photoUrl: string, entrees: EntreeSortie[]) {
-  if (!db) throw new Error('Firebase n’est pas configuré.');
   if (entrees.length === 0) throw new Error('Aucun vêtement à enregistrer.');
-  const firestore = db;
-  const maintenant = Timestamp.now();
   const familleId = familleIdCourante();
   if (!familleId) throw new Error('Aucune famille sélectionnée.');
-  const batch = writeBatch(firestore);
-
-  entrees.forEach((entree) => {
-    const nom = entree.nom.trim();
-    const mouvementRef = doc(collection(firestore, 'mouvements'));
-    const vetementRef = entree.vetementId
-      ? doc(firestore, 'vetements', entree.vetementId)
-      : doc(collection(firestore, 'vetements'));
-
-    batch.set(mouvementRef, {
-      vetementId: vetementRef.id,
-      familleId,
-      fille,
-      date: maintenant,
-      photoUrl,
-      statut: 'sorti',
-      dateRetour: null,
-      origine: 'photo'
-    });
-
-    if (entree.vetementId) {
-      batch.update(vetementRef, {
-        statutActuel: 'sorti',
-        dernierMouvementId: mouvementRef.id,
-        dateDernierMouvement: maintenant
-      });
-    } else {
-      batch.set(vetementRef, {
-        fille,
-        familleId,
-        nom,
-        nomNormalise: normaliserNom(nom),
-        photoReference: photoUrl,
-        dateCreation: maintenant,
-        actif: true,
-        statutActuel: 'sorti',
-        dernierMouvementId: mouvementRef.id,
-        dateDernierMouvement: maintenant
-      });
-    }
-  });
-
-  await batch.commit();
+  await appelerFonction('enregistrerAjoutVetements', { familleId, fille, photoUrl, entrees, typeAjout: 'sortie' });
 }
 
 /**
@@ -145,29 +104,9 @@ export async function enregistrerSortiePhoto(fille: Fille, photoUrl: string, ent
  * créé : ils commencent donc logiquement « revenus », à la maison.
  */
 export async function enregistrerAjoutCataloguePhoto(fille: Fille, photoUrl: string, entrees: EntreeSortie[]) {
-  if (!db) throw new Error('Firebase n’est pas configuré.');
   const nouveaux = entrees.filter((entree) => !entree.vetementId);
   if (nouveaux.length === 0) throw new Error('Tous ces vêtements sont déjà présents au catalogue.');
-
-  const maintenant = Timestamp.now();
   const familleId = familleIdCourante();
   if (!familleId) throw new Error('Aucune famille sélectionnée.');
-  const batch = writeBatch(db);
-  nouveaux.forEach((entree) => {
-    const vetementRef = doc(collection(db!, 'vetements'));
-    const nom = entree.nom.trim();
-    batch.set(vetementRef, {
-      fille,
-      familleId,
-      nom,
-      nomNormalise: normaliserNom(nom),
-      photoReference: photoUrl,
-      dateCreation: maintenant,
-      actif: true,
-      statutActuel: 'revenu',
-      dernierMouvementId: null,
-      dateDernierMouvement: null
-    });
-  });
-  await batch.commit();
+  await appelerFonction('enregistrerAjoutVetements', { familleId, fille, photoUrl, entrees: nouveaux, typeAjout: 'catalogue' });
 }

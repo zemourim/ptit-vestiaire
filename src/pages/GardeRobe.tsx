@@ -10,7 +10,7 @@ import type { Fille, Vetement } from '../types';
 
 type FiltreFille = Fille | 'Tout';
 
-export function GardeRobe({ enfants }: { enfants: string[] }) {
+export function GardeRobe({ enfants, premium }: { enfants: string[]; premium: boolean }) {
   const { vetements, loading, error } = useVetements();
   const { settings } = useSettings();
   const [filtre, setFiltre] = useState<FiltreFille>('Tout');
@@ -24,7 +24,7 @@ export function GardeRobe({ enfants }: { enfants: string[] }) {
   const visibles = useMemo(() => {
     const cible = normaliserNom(recherche);
     return vetements.filter((vetement) => {
-      if (!voirArchives && !vetement.actif) return false;
+      if (!voirArchives && (!vetement.actif || vetement.bloqueParPlan)) return false;
       if (filtre !== 'Tout' && vetement.fille !== filtre) return false;
       if (cible && !vetement.nomNormalise.includes(cible)) return false;
       return true;
@@ -148,17 +148,17 @@ export function GardeRobe({ enfants }: { enfants: string[] }) {
                 vetement={vetement}
                 alertAfterDays={settings.alertAfterDays}
                 busy={busyId === vetement.id}
-                onToggleStatut={() => void basculer(vetement)}
-                onVoirHistorique={() => setDetail(vetement)}
-                onToggleActif={() => void archiver(vetement)}
-                onSupprimer={() => setASupprimer(vetement)}
+                onToggleStatut={vetement.bloqueParPlan ? undefined : () => void basculer(vetement)}
+                onVoirHistorique={vetement.bloqueParPlan ? undefined : () => setDetail(vetement)}
+                onToggleActif={vetement.bloqueParPlan ? undefined : () => void archiver(vetement)}
+                onSupprimer={vetement.bloqueParPlan ? undefined : () => setASupprimer(vetement)}
               />
             ))}
           </div>
         </section>
       ))}
 
-      {detail && <HistoriqueVetement vetement={detail} onClose={() => setDetail(null)} />}
+      {detail && <HistoriqueVetement vetement={detail} historiqueIllimite={premium} onClose={() => setDetail(null)} />}
       {aSupprimer && (
         <div className="fixed inset-0 z-40 flex items-end justify-center bg-slate-950/40 p-0 md:items-center md:p-6" role="presentation">
           <section role="dialog" aria-modal="true" aria-labelledby="suppression-title" className="w-full max-w-md rounded-t-3xl bg-white p-5 shadow-xl md:rounded-3xl">

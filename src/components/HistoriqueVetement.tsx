@@ -6,11 +6,12 @@ import type { Vetement } from '../types';
 type Props = {
   vetement: Vetement;
   onClose: () => void;
+  historiqueIllimite?: boolean;
 };
 
 /** Panneau affichant toutes les fois où un vêtement est sorti ou rentré. */
-export function HistoriqueVetement({ vetement, onClose }: Props) {
-  const { mouvements, loading, error } = useMouvementsVetement(vetement.id);
+export function HistoriqueVetement({ vetement, onClose, historiqueIllimite = false }: Props) {
+  const { mouvements, loading, error } = useMouvementsVetement(vetement.id, historiqueIllimite);
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-slate-950/40 p-0 md:items-center md:p-6" onClick={onClose}>

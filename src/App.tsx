@@ -17,6 +17,7 @@ import { hasFirebaseConfig } from './firebase/config';
 import { useAuth } from './firebase/useAuth';
 import { useFamille, useFamillesUtilisateur } from './firebase/useFamilles';
 import { definirFamilleCourante, familleIdCourante } from './firebase/familleCourante';
+import { enfantsActifs } from './types';
 
 type Tab = 'dashboard' | 'garderobe' | 'nouvelle' | 'historique' | 'reglages';
 type PublicRoute = 'accueil' | 'connexion' | 'inscription';
@@ -29,7 +30,7 @@ const tabs: Array<{ id: Tab; label: string; icon: typeof Shirt }> = [
   { id: 'reglages', label: 'Réglages', icon: Settings }
 ];
 
-const informationPages: InformationSlug[] = ['a-propos', 'faq', 'cgu', 'confidentialite', 'cookies', 'mentions-legales'];
+const informationPages: InformationSlug[] = ['a-propos', 'faq', 'cgu', 'cgv', 'confidentialite', 'cookies', 'mentions-legales'];
 
 export function App() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
@@ -121,7 +122,7 @@ export function App() {
   if (familles.liens.length === 0) {
     return <ConfigurationFamille userId={auth.user.uid} email={auth.user.email ?? ''} onCreated={() => window.location.reload()} onCancel={auth.logOut} />;
   }
-  const enfants = famille?.enfants?.length ? famille.enfants : ['Enfant'];
+  const enfants = enfantsActifs(famille).length ? enfantsActifs(famille) : ['Enfant'];
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#cffafe_0,#f8fafc_34%,#fff7ed_100%)] text-slate-950">
@@ -144,11 +145,11 @@ export function App() {
       </header>
 
       <main className="mx-auto max-w-6xl px-4 pb-28 pt-5 md:pb-8">
-        {activeTab === 'dashboard' && <TableauDeBord enfants={enfants} />}
-        {activeTab === 'garderobe' && <GardeRobe enfants={enfants} />}
-        {activeTab === 'nouvelle' && <NouvelleSortie userId={auth.user.uid} enfants={enfants} onCreated={() => openTab('dashboard')} />}
-        {activeTab === 'historique' && <Historique enfants={enfants} />}
-        {activeTab === 'reglages' && <Reglages userEmail={auth.user.email ?? ''} userId={auth.user.uid} hasPasswordProvider={auth.hasPasswordProvider} onChangePassword={auth.changePassword} />}
+        {activeTab === 'dashboard' && <TableauDeBord enfants={enfants} premium={famille?.plan === 'payant'} />}
+        {activeTab === 'garderobe' && <GardeRobe enfants={enfants} premium={famille?.plan === 'payant'} />}
+        {activeTab === 'nouvelle' && <NouvelleSortie userId={auth.user.uid} enfants={enfants} famille={famille!} onCreated={() => openTab('dashboard')} />}
+        {activeTab === 'historique' && <Historique enfants={enfants} premium={famille?.plan === 'payant'} />}
+        {activeTab === 'reglages' && <Reglages famille={famille!} userEmail={auth.user.email ?? ''} userId={auth.user.uid} hasPasswordProvider={auth.hasPasswordProvider} onChangePassword={auth.changePassword} />}
       </main>
 
       <nav className="mobile-nav fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 px-2 pt-2 backdrop-blur md:hidden">

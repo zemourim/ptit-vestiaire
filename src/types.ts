@@ -19,6 +19,8 @@ export type Vetement = {
   dernierMouvementId: string | null;
   /** Dénormalisation de la date du dernier mouvement : évite une requête par vêtement à l'affichage. */
   dateDernierMouvement: Timestamp | null;
+  /** Donnée conservée après une rétrogradation, mais inutilisable tant que le plan reste gratuit. */
+  bloqueParPlan?: boolean;
 };
 
 /** Événement daté : ce vêtement est sorti, ou ce vêtement est rentré. */
@@ -36,10 +38,38 @@ export type Mouvement = {
 };
 
 export type RoleFamille = 'proprietaire' | 'invite';
-export type Famille = { id: string; nom: string; dateCreation: Timestamp; proprietaireUserId: string; enfants: string[] };
+export type PlanFamille = 'gratuit' | 'payant';
+export type FrequencePaiement = 'mensuel' | 'annuel' | null;
+export type StatutAbonnement = 'actif' | 'en_attente_renouvellement' | 'expire' | null;
+export type Famille = {
+  id: string;
+  nom: string;
+  dateCreation: Timestamp;
+  proprietaireUserId: string;
+  enfants: string[];
+  plan?: PlanFamille;
+  stripeCustomerId?: string | null;
+  stripeSubscriptionId?: string | null;
+  frequencePaiement?: FrequencePaiement;
+  dateDebutAbonnement?: Timestamp | null;
+  dateProchainRenouvellement?: Timestamp | null;
+  nombreRappelsEnvoyes?: number;
+  statutAbonnement?: StatutAbonnement;
+  nombreVetements?: number;
+  echecPaiementLe?: Timestamp | null;
+};
 export type LienFamille = { familleId: string; role: RoleFamille };
 export type Utilisateur = { id: string; email: string; familles: LienFamille[]; familleIds?: string[] };
 
 export type AppSettings = {
   alertAfterDays: number;
 };
+
+export function planFamille(famille: Famille | null | undefined): PlanFamille {
+  return famille?.plan === 'payant' ? 'payant' : 'gratuit';
+}
+
+export function enfantsActifs(famille: Famille | null | undefined): string[] {
+  const enfants = famille?.enfants?.filter(Boolean) ?? [];
+  return planFamille(famille) === 'payant' ? enfants : enfants.slice(0, 1);
+}

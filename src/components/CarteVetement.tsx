@@ -23,7 +23,7 @@ export function CarteVetement({ vetement, alertAfterDays, busy, onToggleStatut, 
     <article
       className={`overflow-hidden rounded-3xl border bg-white shadow-sm transition ${
         late ? 'border-rose-200' : 'border-slate-200'
-      } ${vetement.actif ? '' : 'opacity-60'}`}
+      } ${vetement.actif && !vetement.bloqueParPlan ? '' : 'opacity-60'}`}
     >
       {vetement.photoReference ? (
         <img src={vetement.photoReference} alt={vetement.nom} className="h-44 w-full object-cover" loading="lazy" />
@@ -46,7 +46,7 @@ export function CarteVetement({ vetement, alertAfterDays, busy, onToggleStatut, 
           {vetement.dateDernierMouvement
             ? `${sorti ? 'Sorti' : 'Rentré'} le ${formatDate(vetement.dateDernierMouvement)}`
             : 'Aucun mouvement enregistré'}
-          {!vetement.actif && ' · archivé'}
+          {(!vetement.actif || vetement.bloqueParPlan) && ' · archivé'}
         </p>
 
         <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">

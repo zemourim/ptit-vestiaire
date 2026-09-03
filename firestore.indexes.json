@@ -26,6 +26,14 @@
       ]
     },
     {
+      "collectionGroup": "vetements",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "familleId", "order": "ASCENDING" },
+        { "fieldPath": "dateCreation", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "mouvements",
       "queryScope": "COLLECTION",
       "fields": [

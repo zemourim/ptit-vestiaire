@@ -7,7 +7,7 @@ import { basculerStatut, useVetements } from '../firebase/useVetements';
 import { useSettings } from '../firebase/useSettings';
 import type { Fille, Vetement } from '../types';
 
-export function TableauDeBord({ enfants }: { enfants: string[] }) {
+export function TableauDeBord({ enfants, premium }: { enfants: string[]; premium: boolean }) {
   const { vetements, loading, error } = useVetements();
   const { settings } = useSettings();
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -15,7 +15,7 @@ export function TableauDeBord({ enfants }: { enfants: string[] }) {
   const [actionError, setActionError] = useState<string | null>(null);
 
   const sortis = useMemo(
-    () => vetements.filter((vetement) => vetement.actif && vetement.statutActuel === 'sorti'),
+    () => vetements.filter((vetement) => vetement.actif && !vetement.bloqueParPlan && vetement.statutActuel === 'sorti'),
     [vetements]
   );
 
@@ -101,7 +101,7 @@ export function TableauDeBord({ enfants }: { enfants: string[] }) {
         ))}
       </div>
 
-      {detail && <HistoriqueVetement vetement={detail} onClose={() => setDetail(null)} />}
+      {detail && <HistoriqueVetement vetement={detail} historiqueIllimite={premium} onClose={() => setDetail(null)} />}
     </section>
   );
 }

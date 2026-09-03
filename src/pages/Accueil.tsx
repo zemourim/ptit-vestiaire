@@ -107,10 +107,10 @@ export function Accueil() {
 
         <section id="tarifs" className="scroll-mt-24 px-4 py-20">
           <div className="mx-auto max-w-5xl">
-            <div className="text-center"><p className="text-sm font-black uppercase tracking-[0.22em] text-cyan-800">Formules prévues</p><h2 className="mt-3 text-3xl font-black md:text-5xl">Commencez gratuitement</h2><p className="mx-auto mt-4 max-w-2xl font-bold text-slate-600">Le service est actuellement en phase de lancement. L’offre Premium et l’application définitive de ces quotas seront annoncées avant leur mise en service.</p></div>
+            <div className="text-center"><p className="text-sm font-black uppercase tracking-[0.22em] text-cyan-800">Deux formules</p><h2 className="mt-3 text-3xl font-black md:text-5xl">Commencez gratuitement</h2><p className="mx-auto mt-4 max-w-2xl font-bold text-slate-600">Passez à la formule payante à tout moment depuis les réglages de votre famille.</p></div>
             <div className="mt-10 grid gap-6 md:grid-cols-2">
               <PricingCard title="Gratuit" price="0 €" subtitle="Pour découvrir PtitVestiaire" features={freeFeatures} />
-              <PricingCard title="Premium" price="24,99 €/an" subtitle="ou 2,99 €/mois · bientôt disponible" features={premiumFeatures} highlighted />
+              <PricingCard title="Payant" price="24,99 €/an" subtitle="ou 2,99 €/mois" features={premiumFeatures} highlighted />
             </div>
             <div className="mt-8 text-center"><a href="#inscription" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-7 py-4 font-black text-white shadow-soft">Créer mon compte gratuitement <ArrowRight size={19} /></a></div>
           </div>
@@ -138,5 +138,5 @@ function MockClothing({ color, label, child, childClass }: { color: string; labe
 }
 
 function PricingCard({ title, price, subtitle, features, highlighted = false }: { title: string; price: string; subtitle: string; features: string[]; highlighted?: boolean }) {
-  return <article className={`relative rounded-[2rem] border p-7 shadow-sm ${highlighted ? 'border-slate-950 bg-slate-950 text-white' : 'border-slate-200 bg-white'}`}>{highlighted && <span className="absolute right-5 top-5 rounded-full bg-violet-200 px-3 py-1 text-xs font-black text-violet-950">Bientôt</span>}<h3 className="text-2xl font-black">{title}</h3><p className="mt-4 text-4xl font-black">{price}</p><p className={`mt-2 font-bold ${highlighted ? 'text-slate-300' : 'text-slate-500'}`}>{subtitle}</p><ul className="mt-7 space-y-3">{features.map((feature) => <li key={feature} className="flex items-start gap-3 font-bold"><span className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full ${highlighted ? 'bg-cyan-300 text-slate-950' : 'bg-cyan-100 text-cyan-900'}`}><Check size={13} strokeWidth={3} /></span>{feature}</li>)}</ul></article>;
+  return <article className={`relative rounded-[2rem] border p-7 shadow-sm ${highlighted ? 'border-slate-950 bg-slate-950 text-white' : 'border-slate-200 bg-white'}`}><h3 className="text-2xl font-black">{title}</h3><p className="mt-4 text-4xl font-black">{price}</p><p className={`mt-2 font-bold ${highlighted ? 'text-slate-300' : 'text-slate-500'}`}>{subtitle}</p><ul className="mt-7 space-y-3">{features.map((feature) => <li key={feature} className="flex items-start gap-3 font-bold"><span className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full ${highlighted ? 'bg-cyan-300 text-slate-950' : 'bg-cyan-100 text-cyan-900'}`}><Check size={13} strokeWidth={3} /></span>{feature}</li>)}</ul></article>;
 }

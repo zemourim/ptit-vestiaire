@@ -6,7 +6,9 @@ service firebase.storage {
     function member(familleId) {
       return request.auth != null
         && request.auth.token.email_verified == true
-        && firestore.exists(/databases/(default)/documents/familles/$(familleId)/membres/$(request.auth.uid));
+        && firestore.exists(/databases/(default)/documents/familles/$(familleId)/membres/$(request.auth.uid))
+        && (!firestore.get(/databases/(default)/documents/familles/$(familleId)/membres/$(request.auth.uid)).data.keys().hasAny(['bloqueParPlan'])
+          || firestore.get(/databases/(default)/documents/familles/$(familleId)/membres/$(request.auth.uid)).data.bloqueParPlan != true);
     }
 
     match /familles/{familleId}/sorties/{userId}/{fileName} {

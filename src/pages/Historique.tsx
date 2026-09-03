@@ -9,9 +9,9 @@ import type { Fille, Vetement } from '../types';
 
 type Filter = Fille | 'Tout';
 
-export function Historique({ enfants }: { enfants: string[] }) {
+export function Historique({ enfants, premium }: { enfants: string[]; premium: boolean }) {
   const [filter, setFilter] = useState<Filter>('Tout');
-  const { mouvements, loading, error } = useJournalMouvements(filter);
+  const { mouvements, loading, error } = useJournalMouvements(filter, 120, premium);
   const { vetements } = useVetements();
   const [detail, setDetail] = useState<Vetement | null>(null);
 
@@ -37,6 +37,8 @@ export function Historique({ enfants }: { enfants: string[] }) {
           </button>
         ))}
       </div>
+
+      {!premium && <p className="rounded-2xl bg-violet-50 p-3 text-sm font-bold text-violet-800">La formule gratuite affiche et conserve les 30 derniers jours. <a href="#reglages" className="font-black underline">Débloquer l’historique illimité</a></p>}
 
       {error && <p className="rounded-2xl bg-rose-100 p-4 text-sm font-bold text-rose-700">{error}</p>}
       {loading && <p className="rounded-2xl bg-white p-4 font-bold text-slate-600">Chargement de l’historique...</p>}
@@ -84,7 +86,7 @@ export function Historique({ enfants }: { enfants: string[] }) {
         <p className="rounded-3xl bg-white p-6 text-center font-bold text-slate-500">Aucun mouvement enregistré.</p>
       )}
 
-      {detail && <HistoriqueVetement vetement={detail} onClose={() => setDetail(null)} />}
+      {detail && <HistoriqueVetement vetement={detail} historiqueIllimite={premium} onClose={() => setDetail(null)} />}
     </section>
   );
 }

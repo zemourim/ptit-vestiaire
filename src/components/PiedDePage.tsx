@@ -2,6 +2,7 @@ const links = [
   ['a-propos', 'Qui sommes-nous ?'],
   ['faq', 'FAQ'],
   ['cgu', 'Conditions d’utilisation'],
+  ['cgv', 'Conditions de vente'],
   ['confidentialite', 'Confidentialité'],
   ['cookies', 'Cookies'],
   ['mentions-legales', 'Mentions légales']
