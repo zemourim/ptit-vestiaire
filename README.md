@@ -155,7 +155,7 @@ Cycle automatique : Checkout crée l’abonnement ; `invoice.paid` active ou ren
    STRIPE_SECRET_KEY=sk_test_... npm run stripe:setup
    ```
 
-   Le script refuse volontairement une clé live et affiche les deux identifiants `price_...`.
+   Le script refuse volontairement une clé live. Il crée ou retrouve le produit et les deux prix, crée l’endpoint webhook du projet de test s’il manque, configure un portail client de base, puis affiche les identifiants à enregistrer. Le secret du webhook n’est retourné par Stripe que lors de sa création.
 2. Configure les secrets des fonctions, sans jamais les préfixer par `VITE_` ni les placer dans le client :
 
    ```bash
@@ -175,7 +175,7 @@ Cycle automatique : Checkout crée l’abonnement ; `invoice.paid` active ou ren
    ```
 
    Le déploiement de `verifierAbonnements` crée automatiquement le job Cloud Scheduler quotidien. Le projet Firebase doit être sur Blaze ; Cloud Scheduler et l’envoi d’emails peuvent générer des coûts selon les quotas des fournisseurs.
-4. Dans Stripe Developers → Webhooks, ajoute l’URL HTTPS de `stripeWebhook` déployée en `europe-west1` et sélectionne : `checkout.session.completed`, `invoice.paid`, `invoice.payment_failed`, `customer.subscription.updated`, `customer.subscription.deleted`. Copie son secret de signature dans `STRIPE_WEBHOOK_SECRET`. Active et configure aussi le Customer Portal.
+4. Si l’endpoint existait déjà, vérifie dans Stripe Developers → Webhooks qu’il pointe vers `stripeWebhook` en `europe-west1` et écoute : `checkout.session.completed`, `invoice.paid`, `invoice.payment_failed`, `customer.subscription.updated`, `customer.subscription.deleted`. Renouvelle son secret si nécessaire puis enregistre-le dans `STRIPE_WEBHOOK_SECRET`.
 
 ### Test complet en mode test
 
