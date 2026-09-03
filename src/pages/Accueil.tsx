@@ -18,7 +18,7 @@ const features = [
 ];
 
 const freeFeatures = ['1 enfant', 'Jusqu’à 20 vêtements', 'Historique sur 30 jours', 'Saisie manuelle', '1 membre invité', '1 photo par vêtement'];
-const premiumFeatures = ['Enfants illimités', 'Vêtements illimités', 'Historique illimité', 'Reconnaissance IA automatique', 'Membres invités illimités', 'Export des données', 'Plusieurs photos par vêtement'];
+const premiumFeatures = ['Enfants illimités', 'Vêtements illimités', 'Historique illimité', 'Reconnaissance IA automatique', 'Membres invités illimités', 'Export des données', 'Rappels automatiques personnalisés'];
 
 export function Accueil() {
   return (
