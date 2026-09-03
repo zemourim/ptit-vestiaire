@@ -6,29 +6,33 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function verified() {
+      return signedIn() && request.auth.token.email_verified == true;
+    }
+
     function member(familleId) {
-      return signedIn()
+      return verified()
         && familleId in get(/databases/$(database)/documents/utilisateurs/$(request.auth.uid)).data.familleIds;
     }
 
     function owner(familleId) {
-      return signedIn() && get(/databases/$(database)/documents/familles/$(familleId)).data.proprietaireUserId == request.auth.uid;
+      return verified() && get(/databases/$(database)/documents/familles/$(familleId)).data.proprietaireUserId == request.auth.uid;
     }
 
     function ownerAfter(familleId) {
-      return signedIn() && getAfter(/databases/$(database)/documents/familles/$(familleId)).data.proprietaireUserId == request.auth.uid;
+      return verified() && getAfter(/databases/$(database)/documents/familles/$(familleId)).data.proprietaireUserId == request.auth.uid;
     }
 
     function memberAfter(familleId) {
-      return signedIn()
+      return verified()
         && familleId in getAfter(/databases/$(database)/documents/utilisateurs/$(request.auth.uid)).data.familleIds;
     }
 
     match /familles/{familleId} {
       allow read: if member(familleId);
-      allow create: if signedIn() && request.resource.data.proprietaireUserId == request.auth.uid;
+      allow create: if verified() && request.resource.data.proprietaireUserId == request.auth.uid;
       allow update: if member(familleId) && request.resource.data.proprietaireUserId == resource.data.proprietaireUserId;
-      allow delete: if signedIn() && resource.data.proprietaireUserId == request.auth.uid;
+      allow delete: if verified() && resource.data.proprietaireUserId == request.auth.uid;
       match /membres/{userId} {
         allow read: if member(familleId);
         allow create: if request.auth.uid == userId
@@ -39,8 +43,8 @@ service cloud.firestore {
     }
 
     match /utilisateurs/{userId} {
-      allow read: if signedIn() && request.auth.uid == userId;
-      allow create: if signedIn() && request.auth.uid == userId
+      allow read: if verified() && request.auth.uid == userId;
+      allow create: if verified() && request.auth.uid == userId
         && request.resource.data.familleIds.size() == 1
         && request.resource.data.familles.size() == 1
         && request.resource.data.familles[0].familleId == request.resource.data.familleIds[0]
@@ -52,7 +56,7 @@ service cloud.firestore {
             && get(/databases/$(database)/documents/invitations/$(request.resource.data.joinCode)).data.familleId == request.resource.data.familleIds[0])
         );
       // L'appartenance ne change que via création, invitation exacte ou retrait propriétaire.
-      allow update: if signedIn() && (
+      allow update: if verified() && (
         (request.auth.uid == userId
           && request.resource.data.familleIds == resource.data.familleIds
           && request.resource.data.familles == resource.data.familles)
@@ -74,12 +78,12 @@ service cloud.firestore {
     }
 
     match /invitations/{invitationId} {
-      allow create: if signedIn() && member(request.resource.data.familleId);
-      allow get: if signedIn();
+      allow create: if verified() && member(request.resource.data.familleId);
+      allow get: if verified();
       allow list: if false;
-      allow update: if signedIn() && member(resource.data.familleId);
+      allow update: if verified() && member(resource.data.familleId);
       // memberAfter autorise la consommation atomique du code lors de l'adhésion.
-      allow delete: if signedIn()
+      allow delete: if verified()
         && (member(resource.data.familleId) || memberAfter(resource.data.familleId));
     }
 

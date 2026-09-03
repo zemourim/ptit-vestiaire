@@ -8,6 +8,8 @@ Le fichier `.env.multi-familles` est ignoré par Git. Lance le front avec `npm r
 
 ## Données
 
+Les inscriptions email/mot de passe déclenchent l'email de vérification natif de Firebase Authentication. Tant que l'adresse n'est pas validée, le frontend bloque la configuration familiale et les règles Firestore/Storage refusent tout accès aux données. Les comptes Google disposent déjà d'une adresse vérifiée et poursuivent directement le parcours.
+
 `familles/{familleId}` contient `nom`, `dateCreation`, `proprietaireUserId` et `enfants`. `utilisateurs/{uid}` contient l'email, les liens `{ familleId, role }` et le champ technique `familleIds`, utilisé par les règles Firestore pour vérifier rapidement l'appartenance. Chaque document `vetements` et `mouvements` porte `familleId`.
 
 Les règles refusent l'accès aux vêtements, mouvements, réglages et familles dont l'identifiant n'appartient pas à `utilisateurs/{uid}.familleIds`. Le champ `familleIds` est une dénormalisation de la liste de liens : il ne remplace pas les rôles. Les modifications d'appartenance sont limitées à la création atomique d'une famille, à la consommation d'un code d'invitation précis ou au retrait par le propriétaire.

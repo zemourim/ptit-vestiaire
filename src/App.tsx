@@ -7,6 +7,7 @@ import { Historique } from './pages/Historique';
 import { NouvelleSortie } from './pages/NouvelleSortie';
 import { Reglages } from './pages/Reglages';
 import { TableauDeBord } from './pages/TableauDeBord';
+import { VerificationEmail } from './pages/VerificationEmail';
 import { hasFirebaseConfig } from './firebase/config';
 import { useAuth } from './firebase/useAuth';
 import { useFamille, useFamillesUtilisateur } from './firebase/useFamilles';
@@ -25,7 +26,7 @@ const tabs: Array<{ id: Tab; label: string; icon: typeof Shirt }> = [
 export function App() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const auth = useAuth();
-  const familles = useFamillesUtilisateur(auth.user?.uid ?? null);
+  const familles = useFamillesUtilisateur(auth.user?.emailVerified ? auth.user.uid : null);
   const familleId = familles.liens[0]?.familleId ?? null;
   const { famille, loading: familleLoading } = useFamille(familleId);
   const [familleActiveId, setFamilleActiveId] = useState<string | null>(() => familleIdCourante());
@@ -51,6 +52,10 @@ export function App() {
 
   if (!hasFirebaseConfig || !auth.user || !auth.isAllowed) {
     return <Connexion auth={auth} firebaseReady={hasFirebaseConfig} />;
+  }
+
+  if (!auth.user.emailVerified) {
+    return <VerificationEmail email={auth.user.email ?? ''} onResend={auth.sendVerification} onRefresh={auth.refreshVerification} onLogout={auth.logOut} />;
   }
 
   // Les écrans Firestore ne sont montés qu'après initialisation de la famille active.

@@ -5,6 +5,7 @@ service firebase.storage {
   match /b/{bucket}/o {
     function member(familleId) {
       return request.auth != null
+        && request.auth.token.email_verified == true
         && firestore.exists(/databases/(default)/documents/familles/$(familleId)/membres/$(request.auth.uid));
     }
 
