@@ -317,7 +317,7 @@ La compression réduit fortement le risque de dépassement, mais elle ne le supp
 
 ## Reconnaissance des vêtements par Claude Vision
 
-Quand une photo est analysée, le navigateur appelle la Cloud Function `analyzeVetements`. La Function envoie l'image à Anthropic avec le modèle `claude-haiku-4-5-20251001` et demande un tableau JSON de vêtements et accessoires visibles, par exemple `["manteau bleu", "baskets blanches"]`. La clé API n'est jamais envoyée au navigateur : elle est conservée dans Firebase Secret Manager et l'accès est limité à la Function.
+Quand une photo est analysée, le navigateur appelle la Cloud Function `analyzeVetementsV2`. La Function envoie l'image à Anthropic avec le modèle `claude-haiku-4-5-20251001` et demande un tableau JSON de vêtements et accessoires visibles, par exemple `["manteau bleu", "baskets blanches"]`. La clé API n'est jamais envoyée au navigateur : elle est conservée dans Firebase Secret Manager et l'accès est limité à la Function. L’ancienne fonction `analyzeVetements` en `us-central1` peut être supprimée après validation de la V2 en `europe-west1`.
 
 Pour créer une clé, utilise [console.anthropic.com](https://console.anthropic.com/), puis configure-la côté serveur :
 

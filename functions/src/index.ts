@@ -26,7 +26,8 @@ function parseClothingResponse(text: string): string[] {
   return parsed.map((item) => item.trim()).filter(Boolean).slice(0, 20);
 }
 
-export const analyzeVetements = onCall<AnalyzeRequest>({ secrets: ['ANTHROPIC_API_KEY'] }, async (request) => {
+// V2 permet de déplacer l'analyse en Europe sans mutation destructive de l'ancienne fonction us-central1.
+export const analyzeVetementsV2 = onCall<AnalyzeRequest>({ secrets: ['ANTHROPIC_API_KEY'] }, async (request) => {
   if (!request.auth) {
     throw new HttpsError('unauthenticated', 'Connecte-toi pour analyser une photo.');
   }
