@@ -59,7 +59,7 @@ export function useAuth(): AuthState {
     setError(null);
     try {
       const credential = await createUserWithEmailAndPassword(auth, email, password);
-      await sendEmailVerification(credential.user);
+      await sendEmailVerification(credential.user, { url: window.location.origin });
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Création du compte impossible.');
       throw caught;
@@ -79,7 +79,7 @@ export function useAuth(): AuthState {
 
   async function sendVerification() {
     if (!user) throw new Error('Aucun utilisateur connecté.');
-    if (!user.emailVerified) await sendEmailVerification(user);
+    if (!user.emailVerified) await sendEmailVerification(user, { url: window.location.origin });
   }
 
   async function refreshVerification() {

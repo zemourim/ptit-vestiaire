@@ -8,6 +8,7 @@ import { NouvelleSortie } from './pages/NouvelleSortie';
 import { Reglages } from './pages/Reglages';
 import { TableauDeBord } from './pages/TableauDeBord';
 import { VerificationEmail } from './pages/VerificationEmail';
+import { ValidationEmail } from './pages/ValidationEmail';
 import { hasFirebaseConfig } from './firebase/config';
 import { useAuth } from './firebase/useAuth';
 import { useFamille, useFamillesUtilisateur } from './firebase/useFamilles';
@@ -30,6 +31,8 @@ export function App() {
   const familleId = familles.liens[0]?.familleId ?? null;
   const { famille, loading: familleLoading } = useFamille(familleId);
   const [familleActiveId, setFamilleActiveId] = useState<string | null>(() => familleIdCourante());
+  const params = new URLSearchParams(window.location.search);
+  const emailActionCode = params.get('mode') === 'verifyEmail' ? params.get('oobCode') : null;
 
   useEffect(() => {
     const nextTab = window.location.hash.replace('#', '') as Tab;
@@ -48,6 +51,10 @@ export function App() {
 
   if (auth.loading) {
     return <CenteredMessage title="PtitVestiaire" message="Chargement de la session..." />;
+  }
+
+  if (emailActionCode) {
+    return <ValidationEmail actionCode={emailActionCode} />;
   }
 
   if (!hasFirebaseConfig || !auth.user || !auth.isAllowed) {

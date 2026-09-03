@@ -8,7 +8,7 @@ Le fichier `.env.multi-familles` est ignoré par Git. Lance le front avec `npm r
 
 ## Données
 
-Les inscriptions email/mot de passe déclenchent l'email de vérification natif de Firebase Authentication. Tant que l'adresse n'est pas validée, le frontend bloque la configuration familiale et les règles Firestore/Storage refusent tout accès aux données. Les comptes Google disposent déjà d'une adresse vérifiée et poursuivent directement le parcours.
+Les inscriptions email/mot de passe déclenchent l'email de vérification natif de Firebase Authentication. Tant que l'adresse n'est pas validée, le frontend bloque la configuration familiale et les règles Firestore/Storage refusent tout accès aux données. Les comptes Google disposent déjà d'une adresse vérifiée et poursuivent directement le parcours. Le modèle Firebase **Authentication → Templates → Vérification de l'adresse email** doit utiliser comme URL d'action personnalisée l'URL publique de l'application : le gestionnaire intégré traite alors le code et redirige automatiquement vers la configuration de la famille.
 
 `familles/{familleId}` contient `nom`, `dateCreation`, `proprietaireUserId` et `enfants`. `utilisateurs/{uid}` contient l'email, les liens `{ familleId, role }` et le champ technique `familleIds`, utilisé par les règles Firestore pour vérifier rapidement l'appartenance. Chaque document `vetements` et `mouvements` porte `familleId`.
 
