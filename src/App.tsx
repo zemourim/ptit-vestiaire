@@ -1,6 +1,7 @@
 import { Archive, LogOut, PlusCircle, Settings, Shirt, Sparkles } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Connexion } from './pages/Connexion';
+import { Accueil } from './pages/Accueil';
 import { ConfigurationFamille } from './pages/ConfigurationFamille';
 import { GardeRobe } from './pages/GardeRobe';
 import { Historique } from './pages/Historique';
@@ -18,6 +19,7 @@ import { useFamille, useFamillesUtilisateur } from './firebase/useFamilles';
 import { definirFamilleCourante, familleIdCourante } from './firebase/familleCourante';
 
 type Tab = 'dashboard' | 'garderobe' | 'nouvelle' | 'historique' | 'reglages';
+type PublicRoute = 'accueil' | 'connexion' | 'inscription';
 
 const tabs: Array<{ id: Tab; label: string; icon: typeof Shirt }> = [
   { id: 'dashboard', label: 'Aperçu', icon: Sparkles },
@@ -35,6 +37,11 @@ export function App() {
     const hash = window.location.hash.replace('#', '') as InformationSlug;
     return informationPages.includes(hash) ? hash : null;
   });
+  const [publicRoute, setPublicRoute] = useState<PublicRoute | null>(() => {
+    const hash = window.location.hash.replace('#', '');
+    if (informationPages.includes(hash as InformationSlug) || tabs.some((tab) => tab.id === hash)) return null;
+    return hash === 'connexion' || hash === 'inscription' ? hash : 'accueil';
+  });
   const auth = useAuth();
   const familles = useFamillesUtilisateur(auth.user?.emailVerified ? auth.user.uid : null);
   const familleId = familles.liens[0]?.familleId ?? null;
@@ -49,15 +56,25 @@ export function App() {
       const hash = window.location.hash.replace('#', '');
       if (informationPages.includes(hash as InformationSlug)) {
         setInformationPage(hash as InformationSlug);
+        setPublicRoute(null);
         return;
       }
       setInformationPage(null);
-      if (tabs.some((tab) => tab.id === hash)) setActiveTab(hash as Tab);
+      if (tabs.some((tab) => tab.id === hash)) {
+        setPublicRoute(null);
+        setActiveTab(hash as Tab);
+        return;
+      }
+      setPublicRoute(hash === 'connexion' || hash === 'inscription' ? hash : 'accueil');
     }
     handleHash();
     window.addEventListener('hashchange', handleHash);
     return () => window.removeEventListener('hashchange', handleHash);
   }, []);
+
+  useEffect(() => {
+    if (!auth.loading && auth.user && publicRoute) window.location.hash = 'dashboard';
+  }, [auth.loading, auth.user, publicRoute]);
 
   useEffect(() => {
     definirFamilleCourante(familleId);
@@ -86,7 +103,10 @@ export function App() {
   }
 
   if (!hasFirebaseConfig || !auth.user || !auth.isAllowed) {
-    return <Connexion auth={auth} firebaseReady={hasFirebaseConfig} />;
+    if (publicRoute === 'connexion' || publicRoute === 'inscription') {
+      return <Connexion key={publicRoute} auth={auth} firebaseReady={hasFirebaseConfig} initialMode={publicRoute} />;
+    }
+    return <Accueil />;
   }
 
   if (!auth.user.emailVerified) {

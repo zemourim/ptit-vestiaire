@@ -8,14 +8,15 @@ import { PiedDePage } from '../components/PiedDePage';
 type Props = {
   auth: ReturnType<typeof useAuth>;
   firebaseReady: boolean;
+  initialMode?: 'connexion' | 'inscription';
 };
 
-export function Connexion({ auth, firebaseReady }: Props) {
+export function Connexion({ auth, firebaseReady, initialMode = 'connexion' }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
-  const [mode, setMode] = useState<'connexion' | 'inscription'>('connexion');
+  const [mode, setMode] = useState<'connexion' | 'inscription'>(initialMode);
   const [showEmail, setShowEmail] = useState(false);
   const [resetSent, setResetSent] = useState(false);
 
@@ -79,6 +80,7 @@ export function Connexion({ auth, firebaseReady }: Props) {
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,#cffafe_0,#f8fafc_45%,#fff7ed_100%)] text-slate-950">
     <main className="grid min-h-[calc(100vh-8rem)] place-items-center px-4 py-10">
       <section className="w-full max-w-md rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-soft backdrop-blur">
+        <a href="#accueil" className="mb-5 inline-flex text-sm font-black text-slate-500 hover:text-slate-950">← Retour à l’accueil</a>
         <div className="mb-8 text-center">
           <p className="text-sm font-black uppercase tracking-[0.24em] text-slate-500">PtitVestiaire</p>
           <h1 className="mt-2 text-4xl font-black">{mode === 'connexion' ? 'Connexion' : 'Créer un compte'}</h1>
