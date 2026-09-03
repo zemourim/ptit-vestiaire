@@ -1,4 +1,4 @@
-import { Merge, Save } from 'lucide-react';
+import { KeyRound, Merge, Save } from 'lucide-react';
 import { GestionFamille } from '../components/GestionFamille';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
@@ -8,9 +8,11 @@ import { fusionnerVetements, useVetements } from '../firebase/useVetements';
 type Props = {
   userEmail: string;
   userId: string;
+  hasPasswordProvider: boolean;
+  onChangePassword: (currentPassword: string, newPassword: string) => Promise<void>;
 };
 
-export function Reglages({ userEmail, userId }: Props) {
+export function Reglages({ userEmail, userId, hasPasswordProvider, onChangePassword }: Props) {
   const { settings, error, updateSettings } = useSettings();
   const [alertAfterDays, setAlertAfterDays] = useState(settings.alertAfterDays);
   const [message, setMessage] = useState<string | null>(null);
@@ -61,8 +63,58 @@ export function Reglages({ userEmail, userId }: Props) {
       <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
         <h3 className="text-lg font-black">Accès adulte</h3>
         <p className="mt-2 font-bold text-slate-600">Connecté avec {userEmail || 'un compte Firebase'}.</p>
+        {hasPasswordProvider ? (
+          <PasswordForm onChangePassword={onChangePassword} />
+        ) : (
+          <p className="mt-3 text-sm font-bold text-slate-500">Ce compte utilise Google. Son mot de passe se gère directement dans le compte Google.</p>
+        )}
       </section>
     </section>
+  );
+}
+
+function PasswordForm({ onChangePassword }: { onChangePassword: Props['onChangePassword'] }) {
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmation, setConfirmation] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function handlePassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setMessage(null);
+    if (newPassword.length < 6) {
+      setMessage('Le nouveau mot de passe doit contenir au moins 6 caractères.');
+      return;
+    }
+    if (newPassword !== confirmation) {
+      setMessage('Les deux nouveaux mots de passe ne correspondent pas.');
+      return;
+    }
+
+    setBusy(true);
+    try {
+      await onChangePassword(currentPassword, newPassword);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmation('');
+      setMessage('Mot de passe modifié.');
+    } catch {
+      setMessage('Mot de passe actuel incorrect ou session trop ancienne. Réessaie.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form className="mt-5 space-y-3 border-t border-slate-100 pt-5" onSubmit={(event) => void handlePassword(event)}>
+      <h4 className="inline-flex items-center gap-2 font-black"><KeyRound size={18} /> Modifier mon mot de passe</h4>
+      <input aria-label="Mot de passe actuel" type="password" autoComplete="current-password" required value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} placeholder="Mot de passe actuel" className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:ring-2 focus:ring-slate-950" />
+      <input aria-label="Nouveau mot de passe" type="password" autoComplete="new-password" required minLength={6} value={newPassword} onChange={(event) => setNewPassword(event.target.value)} placeholder="Nouveau mot de passe" className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:ring-2 focus:ring-slate-950" />
+      <input aria-label="Confirmation du nouveau mot de passe" type="password" autoComplete="new-password" required minLength={6} value={confirmation} onChange={(event) => setConfirmation(event.target.value)} placeholder="Confirmer le nouveau mot de passe" className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:ring-2 focus:ring-slate-950" />
+      <button type="submit" disabled={busy} className="rounded-2xl bg-slate-950 px-5 py-3 font-black text-white disabled:bg-slate-300">{busy ? 'Modification...' : 'Modifier le mot de passe'}</button>
+      {message && <p className="text-sm font-bold text-slate-600">{message}</p>}
+    </form>
   );
 }
 

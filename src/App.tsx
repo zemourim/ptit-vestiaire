@@ -9,6 +9,9 @@ import { Reglages } from './pages/Reglages';
 import { TableauDeBord } from './pages/TableauDeBord';
 import { VerificationEmail } from './pages/VerificationEmail';
 import { ValidationEmail } from './pages/ValidationEmail';
+import { ReinitialisationMotDePasse } from './pages/ReinitialisationMotDePasse';
+import { Informations, type InformationSlug } from './pages/Informations';
+import { PiedDePage } from './components/PiedDePage';
 import { hasFirebaseConfig } from './firebase/config';
 import { useAuth } from './firebase/useAuth';
 import { useFamille, useFamillesUtilisateur } from './firebase/useFamilles';
@@ -24,8 +27,14 @@ const tabs: Array<{ id: Tab; label: string; icon: typeof Shirt }> = [
   { id: 'reglages', label: 'Réglages', icon: Settings }
 ];
 
+const informationPages: InformationSlug[] = ['a-propos', 'faq', 'cgu', 'confidentialite', 'cookies', 'mentions-legales'];
+
 export function App() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
+  const [informationPage, setInformationPage] = useState<InformationSlug | null>(() => {
+    const hash = window.location.hash.replace('#', '') as InformationSlug;
+    return informationPages.includes(hash) ? hash : null;
+  });
   const auth = useAuth();
   const familles = useFamillesUtilisateur(auth.user?.emailVerified ? auth.user.uid : null);
   const familleId = familles.liens[0]?.familleId ?? null;
@@ -33,10 +42,21 @@ export function App() {
   const [familleActiveId, setFamilleActiveId] = useState<string | null>(() => familleIdCourante());
   const params = new URLSearchParams(window.location.search);
   const emailActionCode = params.get('mode') === 'verifyEmail' ? params.get('oobCode') : null;
+  const passwordResetCode = params.get('mode') === 'resetPassword' ? params.get('oobCode') : null;
 
   useEffect(() => {
-    const nextTab = window.location.hash.replace('#', '') as Tab;
-    if (tabs.some((tab) => tab.id === nextTab)) setActiveTab(nextTab);
+    function handleHash() {
+      const hash = window.location.hash.replace('#', '');
+      if (informationPages.includes(hash as InformationSlug)) {
+        setInformationPage(hash as InformationSlug);
+        return;
+      }
+      setInformationPage(null);
+      if (tabs.some((tab) => tab.id === hash)) setActiveTab(hash as Tab);
+    }
+    handleHash();
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
   }, []);
 
   useEffect(() => {
@@ -49,12 +69,20 @@ export function App() {
     window.location.hash = tab;
   }
 
+  if (informationPage) {
+    return <Informations page={informationPage} />;
+  }
+
   if (auth.loading) {
     return <CenteredMessage title="PtitVestiaire" message="Chargement de la session..." />;
   }
 
   if (emailActionCode) {
     return <ValidationEmail actionCode={emailActionCode} />;
+  }
+
+  if (passwordResetCode) {
+    return <ReinitialisationMotDePasse actionCode={passwordResetCode} />;
   }
 
   if (!hasFirebaseConfig || !auth.user || !auth.isAllowed) {
@@ -100,7 +128,7 @@ export function App() {
         {activeTab === 'garderobe' && <GardeRobe enfants={enfants} />}
         {activeTab === 'nouvelle' && <NouvelleSortie userId={auth.user.uid} enfants={enfants} onCreated={() => openTab('dashboard')} />}
         {activeTab === 'historique' && <Historique enfants={enfants} />}
-        {activeTab === 'reglages' && <Reglages userEmail={auth.user.email ?? ''} userId={auth.user.uid} />}
+        {activeTab === 'reglages' && <Reglages userEmail={auth.user.email ?? ''} userId={auth.user.uid} hasPasswordProvider={auth.hasPasswordProvider} onChangePassword={auth.changePassword} />}
       </main>
 
       <nav className="mobile-nav fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 px-2 pt-2 backdrop-blur md:hidden">
@@ -146,6 +174,7 @@ export function App() {
           })}
         </div>
       </nav>
+      <PiedDePage />
     </div>
   );
 }

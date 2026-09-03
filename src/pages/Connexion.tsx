@@ -3,6 +3,7 @@ import { FirebaseError } from 'firebase/app';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
 import type { useAuth } from '../firebase/useAuth';
+import { PiedDePage } from '../components/PiedDePage';
 
 type Props = {
   auth: ReturnType<typeof useAuth>;
@@ -16,6 +17,7 @@ export function Connexion({ auth, firebaseReady }: Props) {
   const [localError, setLocalError] = useState<string | null>(null);
   const [mode, setMode] = useState<'connexion' | 'inscription'>('connexion');
   const [showEmail, setShowEmail] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -49,8 +51,33 @@ export function Connexion({ auth, firebaseReady }: Props) {
     finally { setSubmitting(false); }
   }
 
+  async function handleForgotPassword() {
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail) {
+      setLocalError('Renseigne ton adresse email pour recevoir le lien de réinitialisation.');
+      return;
+    }
+
+    setSubmitting(true);
+    setLocalError(null);
+    setResetSent(false);
+    try {
+      await auth.resetPassword(normalizedEmail);
+      setResetSent(true);
+    } catch (caught) {
+      if (caught instanceof FirebaseError && caught.code === 'auth/invalid-email') {
+        setLocalError('Cette adresse email n’est pas valide.');
+      } else {
+        setLocalError('Impossible d’envoyer le lien pour le moment. Réessaie dans quelques instants.');
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return (
-    <main className="grid min-h-screen place-items-center bg-[radial-gradient(circle_at_top,#cffafe_0,#f8fafc_45%,#fff7ed_100%)] px-4 py-10 text-slate-950">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,#cffafe_0,#f8fafc_45%,#fff7ed_100%)] text-slate-950">
+    <main className="grid min-h-[calc(100vh-8rem)] place-items-center px-4 py-10">
       <section className="w-full max-w-md rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-soft backdrop-blur">
         <div className="mb-8 text-center">
           <p className="text-sm font-black uppercase tracking-[0.24em] text-slate-500">PtitVestiaire</p>
@@ -97,6 +124,23 @@ export function Connexion({ auth, firebaseReady }: Props) {
             </span>
           </label>
 
+          {mode === 'connexion' && (
+            <button
+              type="button"
+              onClick={() => void handleForgotPassword()}
+              disabled={submitting}
+              className="w-full text-right text-sm font-black text-cyan-700 disabled:text-slate-400"
+            >
+              Mot de passe oublié ?
+            </button>
+          )}
+
+          {resetSent && (
+            <p className="rounded-2xl bg-emerald-100 p-3 text-sm font-bold text-emerald-800">
+              Si un compte correspond à cette adresse, un lien de réinitialisation vient d’être envoyé. Pense à vérifier les courriers indésirables.
+            </p>
+          )}
+
           {(auth.error || localError) && <p className="rounded-2xl bg-rose-100 p-3 text-sm font-bold text-rose-700">{localError ?? auth.error}</p>}
 
           <button
@@ -107,10 +151,15 @@ export function Connexion({ auth, firebaseReady }: Props) {
             {submitting ? 'Patiente...' : mode === 'connexion' ? 'Entrer' : 'Créer mon compte'}
           </button>
         </form>}
-        <button type="button" onClick={() => { setMode(mode === 'connexion' ? 'inscription' : 'connexion'); setLocalError(null); }} className="mt-4 w-full text-sm font-black text-cyan-700">
+        <button type="button" onClick={() => { setMode(mode === 'connexion' ? 'inscription' : 'connexion'); setLocalError(null); setResetSent(false); }} className="mt-4 w-full text-sm font-black text-cyan-700">
           {mode === 'connexion' ? 'Nouveau parent ? Créer un compte' : 'J’ai déjà un compte : me connecter'}
         </button>
+        <p className="mt-5 text-center text-xs font-bold leading-5 text-slate-400">
+          En continuant, vous acceptez les <a href="#cgu" className="underline hover:text-slate-700">conditions d’utilisation</a> et reconnaissez avoir lu la <a href="#confidentialite" className="underline hover:text-slate-700">politique de confidentialité</a>.
+        </p>
       </section>
     </main>
+    <PiedDePage />
+    </div>
   );
 }

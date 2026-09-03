@@ -1,4 +1,18 @@
-import { createUserWithEmailAndPassword, GoogleAuthProvider, onAuthStateChanged, reload, sendEmailVerification, signInWithEmailAndPassword, signInWithPopup, signOut, type User } from 'firebase/auth';
+import {
+  createUserWithEmailAndPassword,
+  EmailAuthProvider,
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  reauthenticateWithCredential,
+  reload,
+  sendEmailVerification,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
+  updatePassword,
+  type User
+} from 'firebase/auth';
 import { useEffect, useState } from 'react';
 import { auth } from './config';
 
@@ -10,6 +24,9 @@ type AuthState = {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   signInGoogle: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  hasPasswordProvider: boolean;
   sendVerification: () => Promise<void>;
   refreshVerification: () => Promise<boolean>;
   logOut: () => Promise<void>;
@@ -77,6 +94,19 @@ export function useAuth(): AuthState {
     }
   }
 
+  async function resetPassword(email: string) {
+    if (!auth) throw new Error('Firebase n’est pas encore configuré.');
+    setError(null);
+    await sendPasswordResetEmail(auth, email.trim(), { url: window.location.origin });
+  }
+
+  async function changePassword(currentPassword: string, newPassword: string) {
+    if (!user?.email) throw new Error('Aucun compte email connecté.');
+    const credential = EmailAuthProvider.credential(user.email, currentPassword);
+    await reauthenticateWithCredential(user, credential);
+    await updatePassword(user, newPassword);
+  }
+
   async function sendVerification() {
     if (!user) throw new Error('Aucun utilisateur connecté.');
     if (!user.emailVerified) await sendEmailVerification(user, { url: window.location.origin });
@@ -90,5 +120,21 @@ export function useAuth(): AuthState {
     return user.emailVerified;
   }
 
-  return { user, loading, error, isAllowed, signIn, signUp, signInGoogle, sendVerification, refreshVerification, logOut };
+  const hasPasswordProvider = Boolean(user?.providerData.some((provider) => provider.providerId === 'password'));
+
+  return {
+    user,
+    loading,
+    error,
+    isAllowed,
+    signIn,
+    signUp,
+    signInGoogle,
+    resetPassword,
+    changePassword,
+    hasPasswordProvider,
+    sendVerification,
+    refreshVerification,
+    logOut
+  };
 }
