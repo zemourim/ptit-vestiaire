@@ -1,5 +1,6 @@
 import { ArrowLeft, Heart, ShieldCheck } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { PiedDePage } from '../components/PiedDePage';
 
 export type InformationSlug = 'a-propos' | 'faq' | 'cgu' | 'confidentialite' | 'cookies' | 'mentions-legales';
 
@@ -33,6 +34,7 @@ export function Informations({ page }: { page: InformationSlug }) {
         {page === 'cookies' && <Cookies />}
         {page === 'mentions-legales' && <MentionsLegales />}
       </main>
+      <PiedDePage />
     </div>
   );
 }

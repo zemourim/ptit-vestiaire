@@ -1,6 +1,7 @@
 import { KeyRound, LogOut, Plus, Trash2, Users } from 'lucide-react';
 import { useState } from 'react';
 import { creerFamille, rejoindreFamille } from '../firebase/useFamilles';
+import { PiedDePage } from '../components/PiedDePage';
 
 type Props = {
   userId: string;
@@ -41,7 +42,8 @@ export function ConfigurationFamille({ userId, email, onCreated, onCancel }: Pro
   }
 
   return (
-    <main className="grid min-h-screen place-items-center bg-slate-50 p-6 text-slate-950">
+    <div className="min-h-screen bg-slate-50 text-slate-950">
+    <main className="grid min-h-[calc(100vh-8rem)] place-items-center p-6">
       <form onSubmit={(event) => void submit(event)} className="w-full max-w-lg space-y-5 rounded-3xl bg-white p-6 shadow-soft">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -102,5 +104,7 @@ export function ConfigurationFamille({ userId, email, onCreated, onCancel }: Pro
         <p className="flex items-center gap-2 text-sm font-bold text-slate-500"><Users size={16} /> Connecté avec {email}</p>
       </form>
     </main>
+    <PiedDePage />
+    </div>
   );
 }

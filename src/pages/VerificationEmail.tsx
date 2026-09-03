@@ -1,5 +1,6 @@
 import { LogOut, MailCheck, RefreshCw, Send } from 'lucide-react';
 import { useState } from 'react';
+import { PiedDePage } from '../components/PiedDePage';
 
 type Props = {
   email: string;
@@ -42,7 +43,8 @@ export function VerificationEmail({ email, onResend, onRefresh, onLogout }: Prop
   }
 
   return (
-    <main className="grid min-h-screen place-items-center bg-[radial-gradient(circle_at_top,#cffafe_0,#f8fafc_45%,#fff7ed_100%)] p-6 text-slate-950">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,#cffafe_0,#f8fafc_45%,#fff7ed_100%)] text-slate-950">
+    <main className="grid min-h-[calc(100vh-8rem)] place-items-center p-6">
       <section className="w-full max-w-md rounded-[2rem] border border-white/80 bg-white/90 p-6 text-center shadow-soft backdrop-blur">
         <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-cyan-100 text-cyan-800"><MailCheck size={30} /></div>
         <p className="mt-5 text-sm font-black uppercase tracking-[0.22em] text-cyan-700">Vérification email</p>
@@ -64,5 +66,7 @@ export function VerificationEmail({ email, onResend, onRefresh, onLogout }: Prop
         </button>
       </section>
     </main>
+    <PiedDePage />
+    </div>
   );
 }

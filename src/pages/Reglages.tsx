@@ -69,6 +69,18 @@ export function Reglages({ userEmail, userId, hasPasswordProvider, onChangePassw
           <p className="mt-3 text-sm font-bold text-slate-500">Ce compte utilise Google. Son mot de passe se gère directement dans le compte Google.</p>
         )}
       </section>
+
+      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h3 className="text-lg font-black">Informations et confidentialité</h3>
+        <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-black text-cyan-800">
+          <a href="#a-propos" className="underline">Qui sommes-nous ?</a>
+          <a href="#faq" className="underline">FAQ</a>
+          <a href="#cgu" className="underline">Conditions d’utilisation</a>
+          <a href="#confidentialite" className="underline">Confidentialité</a>
+          <a href="#cookies" className="underline">Cookies</a>
+          <a href="#mentions-legales" className="underline">Mentions légales</a>
+        </div>
+      </section>
     </section>
   );
 }

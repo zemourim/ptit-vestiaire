@@ -3,6 +3,7 @@ import { confirmPasswordReset, verifyPasswordResetCode } from 'firebase/auth';
 import type { FormEvent } from 'react';
 import { useEffect, useState } from 'react';
 import { auth } from '../firebase/config';
+import { PiedDePage } from '../components/PiedDePage';
 
 export function ReinitialisationMotDePasse({ actionCode }: { actionCode: string }) {
   const [email, setEmail] = useState('');
@@ -61,7 +62,8 @@ export function ReinitialisationMotDePasse({ actionCode }: { actionCode: string 
   }
 
   return (
-    <main className="grid min-h-screen place-items-center bg-[radial-gradient(circle_at_top,#cffafe_0,#f8fafc_45%,#fff7ed_100%)] p-6 text-slate-950">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,#cffafe_0,#f8fafc_45%,#fff7ed_100%)] text-slate-950">
+    <main className="grid min-h-[calc(100vh-8rem)] place-items-center p-6">
       <section className="w-full max-w-md rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-soft backdrop-blur">
         <div className="text-center">
           <div className={`mx-auto grid h-16 w-16 place-items-center rounded-full ${error ? 'bg-rose-100 text-rose-700' : success ? 'bg-emerald-100 text-emerald-700' : 'bg-cyan-100 text-cyan-800'}`}>
@@ -98,5 +100,7 @@ export function ReinitialisationMotDePasse({ actionCode }: { actionCode: string 
         )}
       </section>
     </main>
+    <PiedDePage />
+    </div>
   );
 }
