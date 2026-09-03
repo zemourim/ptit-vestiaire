@@ -1,5 +1,5 @@
 import { Timestamp } from 'firebase-admin/firestore';
-import { defineSecret } from 'firebase-functions/params';
+import { defineSecret, defineString } from 'firebase-functions/params';
 import { logger } from 'firebase-functions';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { HttpsError, onCall, onRequest } from 'firebase-functions/v2/https';
@@ -12,11 +12,11 @@ const stripeWebhookSecret = defineSecret('STRIPE_WEBHOOK_SECRET');
 const stripeMonthlyPrice = defineSecret('STRIPE_PRICE_MONTHLY');
 const stripeAnnualPrice = defineSecret('STRIPE_PRICE_ANNUAL');
 const resendApiKey = defineSecret('RESEND_API_KEY');
-const appPublicUrl = defineSecret('APP_PUBLIC_URL');
-const emailFrom = defineSecret('EMAIL_FROM');
+const appPublicUrl = defineString('APP_PUBLIC_URL', { default: 'https://ptit-vestiaire-git-multi-familles-ptit-vestiaire.vercel.app' });
+const emailFrom = defineString('EMAIL_FROM', { default: 'PtitVestiaire <contact@inopia.fr>' });
 
 const stripeSecrets = [stripeSecretKey, stripeMonthlyPrice, stripeAnnualPrice];
-const emailSecrets = [resendApiKey, appPublicUrl, emailFrom];
+const emailSecrets = [resendApiKey];
 
 function stripeClient() {
   return new Stripe(stripeSecretKey.value());
@@ -98,7 +98,7 @@ async function downgrade(familleId: string) {
   await sendEmail(email, 'Votre famille repasse à la formule gratuite', `<p>Bonjour,</p><p>Le paiement de votre abonnement PtitVestiaire n’a pas pu être régularisé pendant le délai de grâce. Votre famille utilise désormais la formule gratuite.</p><p>Vos données supplémentaires sont conservées et seront réactivées si vous reprenez un abonnement depuis les réglages.</p>`);
 }
 
-export const creerSessionCheckout = onCall<{ familleId?: unknown; frequence?: unknown; returnUrl?: unknown }>({ secrets: [...stripeSecrets, appPublicUrl] }, async (request) => {
+export const creerSessionCheckout = onCall<{ familleId?: unknown; frequence?: unknown; returnUrl?: unknown }>({ secrets: stripeSecrets }, async (request) => {
   const familleId = stringValue(request.data.familleId, 100);
   if (request.data.frequence !== 'annuel' && request.data.frequence !== 'mensuel') throw new HttpsError('invalid-argument', 'Périodicité invalide.');
   const frequence = request.data.frequence;
@@ -126,7 +126,7 @@ export const creerSessionCheckout = onCall<{ familleId?: unknown; frequence?: un
   return { url: session.url };
 });
 
-export const creerSessionPortail = onCall<{ familleId?: unknown; returnUrl?: unknown }>({ secrets: [stripeSecretKey, appPublicUrl] }, async (request) => {
+export const creerSessionPortail = onCall<{ familleId?: unknown; returnUrl?: unknown }>({ secrets: [stripeSecretKey] }, async (request) => {
   const familleId = stringValue(request.data.familleId, 100);
   const { family } = await requireOwner(request, familleId);
   const customerId = stringValue(family.get('stripeCustomerId'), 100);

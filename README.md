@@ -164,11 +164,9 @@ Cycle automatique : Checkout crée l’abonnement ; `invoice.paid` active ou ren
    firebase functions:secrets:set STRIPE_PRICE_MONTHLY
    firebase functions:secrets:set STRIPE_PRICE_ANNUAL
    firebase functions:secrets:set RESEND_API_KEY
-   firebase functions:secrets:set APP_PUBLIC_URL
-   firebase functions:secrets:set EMAIL_FROM
    ```
 
-   `APP_PUBLIC_URL` doit contenir l’origine publique autorisée et `EMAIL_FROM` une identité validée chez Resend, par exemple `PtitVestiaire <contact@domaine-valide.fr>`.
+   `APP_PUBLIC_URL` et `EMAIL_FROM` sont des paramètres serveur non sensibles, avec pour valeurs par défaut l’URL Vercel de la branche et `PtitVestiaire <contact@inopia.fr>`. Ils peuvent être surchargés lors du déploiement. Le domaine d’envoi doit être validé chez Resend.
 3. Déploie les règles, index, Storage et fonctions :
 
    ```bash
