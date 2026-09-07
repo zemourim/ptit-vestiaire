@@ -77,6 +77,7 @@ export function Reglages({ userEmail, userId, famille, hasPasswordProvider, onCh
       <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
         <h3 className="text-lg font-black">Informations et confidentialité</h3>
         <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-black text-cyan-800">
+          <a href="#contact" className="underline">Contact</a>
           <a href="#a-propos" className="underline">Qui sommes-nous ?</a>
           <a href="#faq" className="underline">FAQ</a>
           <a href="#cgu" className="underline">Conditions d’utilisation</a>

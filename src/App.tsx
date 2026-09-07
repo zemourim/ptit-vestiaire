@@ -12,6 +12,7 @@ import { VerificationEmail } from './pages/VerificationEmail';
 import { ValidationEmail } from './pages/ValidationEmail';
 import { ReinitialisationMotDePasse } from './pages/ReinitialisationMotDePasse';
 import { Informations, type InformationSlug } from './pages/Informations';
+import { Contact } from './pages/Contact';
 import { PiedDePage } from './components/PiedDePage';
 import { hasFirebaseConfig } from './firebase/config';
 import { useAuth } from './firebase/useAuth';
@@ -21,6 +22,7 @@ import { enfantsActifs } from './types';
 
 type Tab = 'dashboard' | 'garderobe' | 'nouvelle' | 'historique' | 'reglages';
 type PublicRoute = 'accueil' | 'connexion' | 'inscription';
+type InformationRoute = InformationSlug | 'contact';
 
 const tabs: Array<{ id: Tab; label: string; icon: typeof Shirt }> = [
   { id: 'dashboard', label: 'Aperçu', icon: Sparkles },
@@ -31,16 +33,17 @@ const tabs: Array<{ id: Tab; label: string; icon: typeof Shirt }> = [
 ];
 
 const informationPages: InformationSlug[] = ['a-propos', 'faq', 'cgu', 'cgv', 'confidentialite', 'cookies', 'mentions-legales'];
+const informationRoutes: InformationRoute[] = [...informationPages, 'contact'];
 
 export function App() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
-  const [informationPage, setInformationPage] = useState<InformationSlug | null>(() => {
-    const hash = window.location.hash.replace('#', '') as InformationSlug;
-    return informationPages.includes(hash) ? hash : null;
+  const [informationPage, setInformationPage] = useState<InformationRoute | null>(() => {
+    const hash = window.location.hash.replace('#', '') as InformationRoute;
+    return informationRoutes.includes(hash) ? hash : null;
   });
   const [publicRoute, setPublicRoute] = useState<PublicRoute | null>(() => {
     const hash = window.location.hash.replace('#', '');
-    if (informationPages.includes(hash as InformationSlug) || tabs.some((tab) => tab.id === hash)) return null;
+    if (informationRoutes.includes(hash as InformationRoute) || tabs.some((tab) => tab.id === hash)) return null;
     return hash === 'connexion' || hash === 'inscription' ? hash : 'accueil';
   });
   const auth = useAuth();
@@ -55,8 +58,8 @@ export function App() {
   useEffect(() => {
     function handleHash() {
       const hash = window.location.hash.replace('#', '');
-      if (informationPages.includes(hash as InformationSlug)) {
-        setInformationPage(hash as InformationSlug);
+      if (informationRoutes.includes(hash as InformationRoute)) {
+        setInformationPage(hash as InformationRoute);
         setPublicRoute(null);
         return;
       }
@@ -88,7 +91,7 @@ export function App() {
   }
 
   if (informationPage) {
-    return <Informations page={informationPage} />;
+    return informationPage === 'contact' ? <Contact /> : <Informations page={informationPage} />;
   }
 
   if (auth.loading) {

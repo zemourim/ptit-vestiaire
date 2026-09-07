@@ -164,9 +164,10 @@ Cycle automatique : Checkout crée l’abonnement ; `invoice.paid` active ou ren
    firebase functions:secrets:set STRIPE_PRICE_MONTHLY
    firebase functions:secrets:set STRIPE_PRICE_ANNUAL
    firebase functions:secrets:set RESEND_API_KEY
+   firebase functions:secrets:set CONTACT_RECIPIENT
    ```
 
-   `APP_PUBLIC_URL` et `EMAIL_FROM` sont des paramètres serveur non sensibles, avec pour valeurs par défaut l’URL Vercel de la branche et `PtitVestiaire <contact@inopia.fr>`. Ils peuvent être surchargés lors du déploiement. Le domaine d’envoi doit être validé chez Resend.
+   `APP_PUBLIC_URL` possède une valeur par défaut correspondant à la branche Vercel ; `EMAIL_FROM` est demandé lors du déploiement. Le domaine d’envoi doit être validé chez Resend. L’adresse `CONTACT_RECIPIENT` est conservée comme secret serveur et n’est jamais incluse dans le dépôt ni dans le bundle navigateur.
 3. Déploie les règles, index, Storage et fonctions :
 
    ```bash

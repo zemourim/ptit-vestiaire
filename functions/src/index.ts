@@ -3,6 +3,7 @@ import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { db, requireMember } from './server.js';
 export { creerInvitation, enregistrerAjoutVetements, fusionnerVetements, rejoindreFamille, retirerMembre, supprimerVetement } from './catalogue.js';
 export { creerSessionCheckout, creerSessionPortail, stripeWebhook, verifierAbonnements } from './billing.js';
+export { envoyerMessageContact } from './contact.js';
 
 type AnalyzeRequest = {
   imageBase64?: string;

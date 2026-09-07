@@ -13,7 +13,7 @@ const stripeMonthlyPrice = defineSecret('STRIPE_PRICE_MONTHLY');
 const stripeAnnualPrice = defineSecret('STRIPE_PRICE_ANNUAL');
 const resendApiKey = defineSecret('RESEND_API_KEY');
 const appPublicUrl = defineString('APP_PUBLIC_URL', { default: 'https://ptit-vestiaire-git-multi-familles-ptit-vestiaire.vercel.app' });
-const emailFrom = defineString('EMAIL_FROM', { default: 'PtitVestiaire <contact@inopia.fr>' });
+const emailFrom = defineString('EMAIL_FROM');
 
 const stripeSecrets = [stripeSecretKey, stripeMonthlyPrice, stripeAnnualPrice];
 const emailSecrets = [resendApiKey];
@@ -224,5 +224,15 @@ export const verifierAbonnements = onSchedule({ schedule: 'every day 08:00', tim
   for (const family of allFamilies.docs.filter((item) => item.get('plan') !== 'payant')) {
     const oldMoves = await db.collection('mouvements').where('familleId', '==', family.id).where('date', '<', cutoff).limit(400).get();
     if (!oldMoves.empty) { const batch = db.batch(); oldMoves.docs.forEach((move) => batch.delete(move.ref)); await batch.commit(); }
+  }
+
+  const oldRateLimits = await db.collection('contactRateLimits')
+    .where('derniereTentative', '<', Timestamp.fromMillis(now - 2 * 86_400_000))
+    .limit(400)
+    .get();
+  if (!oldRateLimits.empty) {
+    const batch = db.batch();
+    oldRateLimits.docs.forEach((item) => batch.delete(item.ref));
+    await batch.commit();
   }
 });

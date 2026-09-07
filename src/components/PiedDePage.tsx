@@ -1,4 +1,5 @@
 const links = [
+  ['contact', 'Contact'],
   ['a-propos', 'Qui sommes-nous ?'],
   ['faq', 'FAQ'],
   ['cgu', 'Conditions d’utilisation'],
