@@ -1,4 +1,4 @@
-import { Archive, LogOut, PlusCircle, Settings, Shirt, Sparkles } from 'lucide-react';
+import { Archive, CheckCircle2, Loader2, LogOut, PlusCircle, Settings, Shirt, Sparkles, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Connexion } from './pages/Connexion';
 import { Accueil } from './pages/Accueil';
@@ -46,6 +46,7 @@ export function App() {
     if (informationRoutes.includes(hash as InformationRoute) || tabs.some((tab) => tab.id === hash)) return null;
     return hash === 'connexion' || hash === 'inscription' ? hash : 'accueil';
   });
+  const [paymentReturn, setPaymentReturn] = useState(() => new URLSearchParams(window.location.search).get('paiement') === 'succes');
   const auth = useAuth();
   const familles = useFamillesUtilisateur(auth.user?.emailVerified ? auth.user.uid : null);
   const familleId = familles.liens[0]?.familleId ?? null;
@@ -88,6 +89,13 @@ export function App() {
   function openTab(tab: Tab) {
     setActiveTab(tab);
     window.location.hash = tab;
+  }
+
+  function closePaymentConfirmation() {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('paiement');
+    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+    setPaymentReturn(false);
   }
 
   if (informationPage) {
@@ -148,7 +156,17 @@ export function App() {
       </header>
 
       <main className="mx-auto max-w-6xl px-4 pb-28 pt-5 md:pb-8">
-        {activeTab === 'dashboard' && <TableauDeBord enfants={enfants} premium={famille?.plan === 'payant'} />}
+        {paymentReturn && (
+          <div className={`mb-5 flex items-start gap-3 rounded-3xl border p-4 ${famille?.plan === 'payant' ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-cyan-200 bg-cyan-50 text-cyan-900'}`} role="status">
+            {famille?.plan === 'payant' ? <CheckCircle2 className="mt-0.5 shrink-0" /> : <Loader2 className="mt-0.5 shrink-0 animate-spin" />}
+            <div className="min-w-0 flex-1">
+              <p className="font-black">{famille?.plan === 'payant' ? 'Paiement confirmé : la formule payante est active.' : 'Paiement reçu : activation de la formule en cours…'}</p>
+              <p className="mt-1 text-sm font-bold opacity-80">{famille?.plan === 'payant' ? 'Toutes les fonctionnalités sont maintenant débloquées pour votre famille.' : 'Cette page se mettra à jour automatiquement dès la confirmation Stripe.'}</p>
+            </div>
+            <button type="button" onClick={closePaymentConfirmation} className="shrink-0 rounded-full bg-white/70 p-2" aria-label="Fermer"><X size={17} /></button>
+          </div>
+        )}
+        {activeTab === 'dashboard' && <TableauDeBord enfants={enfants} famille={famille!} userId={auth.user.uid} />}
         {activeTab === 'garderobe' && <GardeRobe enfants={enfants} premium={famille?.plan === 'payant'} />}
         {activeTab === 'nouvelle' && <NouvelleSortie userId={auth.user.uid} enfants={enfants} famille={famille!} onCreated={() => openTab('dashboard')} />}
         {activeTab === 'historique' && <Historique enfants={enfants} premium={famille?.plan === 'payant'} />}

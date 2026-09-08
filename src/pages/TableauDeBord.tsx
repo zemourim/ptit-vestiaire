@@ -1,18 +1,24 @@
-import { History, Loader2, LogIn, Shirt } from 'lucide-react';
+import { Crown, History, Loader2, LogIn, Shirt, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { Abonnement } from '../components/Abonnement';
 import { HistoriqueVetement } from '../components/HistoriqueVetement';
 import { getFilleStyles } from '../lib/constants';
 import { daysSince, formatDate } from '../lib/dates';
 import { basculerStatut, useVetements } from '../firebase/useVetements';
 import { useSettings } from '../firebase/useSettings';
-import type { Fille, Vetement } from '../types';
+import type { Famille, Fille, Vetement } from '../types';
 
-export function TableauDeBord({ enfants, premium }: { enfants: string[]; premium: boolean }) {
+type Props = { enfants: string[]; famille: Famille; userId: string };
+
+export function TableauDeBord({ enfants, famille, userId }: Props) {
+  const premium = famille.plan === 'payant';
+  const owner = famille.proprietaireUserId === userId;
   const { vetements, loading, error } = useVetements();
   const { settings } = useSettings();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [detail, setDetail] = useState<Vetement | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   const sortis = useMemo(
     () => vetements.filter((vetement) => vetement.actif && !vetement.bloqueParPlan && vetement.statutActuel === 'sorti'),
@@ -52,6 +58,20 @@ export function TableauDeBord({ enfants, premium }: { enfants: string[]; premium
         <h2 className="mt-1 text-3xl font-black">Aperçu des vêtements</h2>
         <p className="mt-1 font-bold text-slate-500">Du plus ancien au plus récent. Marque un vêtement rentré directement depuis sa vignette.</p>
       </div>
+
+      {!premium && (
+        <section className="flex flex-col gap-4 rounded-3xl border border-violet-200 bg-gradient-to-r from-violet-50 to-cyan-50 p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="inline-flex items-center gap-2 font-black text-violet-800"><Crown size={19} /> Formule gratuite</p>
+            <p className="mt-1 text-sm font-bold text-slate-600">Débloquez la reconnaissance IA et les enfants, vêtements, membres et l’historique illimités.</p>
+          </div>
+          {owner ? (
+            <button type="button" onClick={() => setUpgradeOpen(true)} className="shrink-0 rounded-2xl bg-slate-950 px-5 py-3 font-black text-white">Passer à la formule payante</button>
+          ) : (
+            <p className="shrink-0 text-sm font-black text-violet-800">Le propriétaire peut débloquer la formule.</p>
+          )}
+        </section>
+      )}
 
       {(error || actionError) && (
         <p className="rounded-2xl bg-rose-100 p-4 text-sm font-bold text-rose-700">{actionError ?? error}</p>
@@ -102,6 +122,16 @@ export function TableauDeBord({ enfants, premium }: { enfants: string[]; premium
       </div>
 
       {detail && <HistoriqueVetement vetement={detail} historiqueIllimite={premium} onClose={() => setDetail(null)} />}
+      {upgradeOpen && (
+        <div className="fixed inset-0 z-40 flex items-end justify-center bg-slate-950/50 p-0 md:items-center md:p-6" onClick={() => setUpgradeOpen(false)}>
+          <div role="dialog" aria-modal="true" aria-label="Choisir une formule payante" className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-3xl bg-white p-4 shadow-xl md:rounded-3xl" onClick={(event) => event.stopPropagation()}>
+            <div className="mb-2 flex justify-end">
+              <button type="button" onClick={() => setUpgradeOpen(false)} className="rounded-full bg-slate-100 p-2 text-slate-600" aria-label="Fermer"><X size={19} /></button>
+            </div>
+            <Abonnement famille={famille} userId={userId} />
+          </div>
+        </div>
+      )}
     </section>
   );
 }

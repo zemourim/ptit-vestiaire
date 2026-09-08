@@ -31,6 +31,12 @@ function allowedReturnUrl(value: unknown) {
   } catch { return fallback; }
 }
 
+function checkoutSuccessUrl(returnUrl: string) {
+  const url = new URL(returnUrl);
+  url.searchParams.set('paiement', 'succes');
+  return url.toString();
+}
+
 async function ownerEmail(familleId: string) {
   const family = await db.doc(`familles/${familleId}`).get();
   const owner = await db.doc(`utilisateurs/${family.get('proprietaireUserId')}`).get();
@@ -57,13 +63,22 @@ function subscriptionInfo(subscription: Stripe.Subscription) {
 }
 
 async function setBlockedRecords(familleId: string, blocked: boolean) {
-  const [clothes, members] = await Promise.all([
+  const [family, clothes, members] = await Promise.all([
+    db.doc(`familles/${familleId}`).get(),
     db.collection('vetements').where('familleId', '==', familleId).orderBy('dateCreation', 'asc').get(),
     db.collection(`familles/${familleId}/membres`).get()
   ]);
+  const premierEnfant = ((family.get('enfants') as unknown[] | undefined) ?? [])
+    .find((item): item is string => typeof item === 'string' && item.length > 0);
   const invited = members.docs.filter((item) => item.get('role') === 'invite').sort((a, b) => a.id.localeCompare(b.id));
   const writes: Array<{ ref: FirebaseFirestore.DocumentReference; value: boolean }> = [];
-  clothes.docs.forEach((item, index) => writes.push({ ref: item.ref, value: blocked && index >= 20 }));
+  let activeClothes = 0;
+  clothes.docs.forEach((item) => {
+    const belongsToActiveChild = item.get('fille') === premierEnfant;
+    const keepActive = belongsToActiveChild && activeClothes < 20;
+    if (keepActive) activeClothes += 1;
+    writes.push({ ref: item.ref, value: blocked && !keepActive });
+  });
   invited.forEach((item, index) => writes.push({ ref: item.ref, value: blocked && index >= 1 }));
   for (let start = 0; start < writes.length; start += 400) {
     const batch = db.batch();
@@ -116,7 +131,9 @@ export const creerSessionCheckout = onCall<{ familleId?: unknown; frequence?: un
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription', customer: customerId,
     line_items: [{ price: frequence === 'annuel' ? stripeAnnualPrice.value() : stripeMonthlyPrice.value(), quantity: 1 }],
-    success_url: `${returnUrl}${returnUrl.includes('?') ? '&' : '?'}paiement=succes`, cancel_url: returnUrl,
+    // Le paramètre doit précéder le fragment (#dashboard), sinon le navigateur
+    // ne l'expose pas dans window.location.search au retour de Stripe.
+    success_url: checkoutSuccessUrl(returnUrl), cancel_url: returnUrl,
     client_reference_id: familleId, metadata: { familleId, frequence },
     subscription_data: { metadata: { familleId, frequence } }, allow_promotion_codes: true,
     consent_collection: { terms_of_service: 'required' },

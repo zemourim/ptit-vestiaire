@@ -1,6 +1,6 @@
 import { Timestamp } from 'firebase-admin/firestore';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
-import { db, normaliserNom, requireMember, stringValue } from './server.js';
+import { db, normaliserNom, requireMember, requireOwner, stringValue } from './server.js';
 
 type Entry = { nom?: unknown; vetementId?: unknown };
 type AddRequest = { familleId?: unknown; fille?: unknown; photoUrl?: unknown; typeAjout?: unknown; entrees?: Entry[] };
@@ -105,11 +105,10 @@ export const fusionnerVetements = onCall<{ familleId?: unknown; sourceId?: unkno
 
 export const creerInvitation = onCall<{ familleId?: unknown; createurUserId?: unknown }>(async (request) => {
   const familleId = stringValue(request.data.familleId, 100);
-  const { uid } = await requireMember(request, familleId);
-  const family = await db.doc(`familles/${familleId}`).get();
+  const { uid, family } = await requireOwner(request, familleId);
   const members = await db.collection(`familles/${familleId}/membres`).get();
   const invitedCount = members.docs.filter((item) => item.get('role') === 'invite' && item.get('bloqueParPlan') !== true).length;
-  if (family.get('plan') !== 'payant' && invitedCount >= 1) throw new HttpsError('resource-exhausted', 'La formule gratuite est limitée à un membre invité.');
+  if (family.get('plan') !== 'payant' && invitedCount >= 1) throw new HttpsError('resource-exhausted', 'La formule gratuite est limitée à un membre invité. Passe à la formule payante pour inviter une autre personne.');
   const code = crypto.randomUUID().replaceAll('-', '').slice(0, 10).toUpperCase();
   await db.doc(`invitations/${code}`).create({ code, familleId, createurUserId: uid, dateCreation: Timestamp.now() });
   return { code };

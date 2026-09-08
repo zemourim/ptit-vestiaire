@@ -6,7 +6,7 @@ if (!secret?.startsWith('sk_test_')) {
 }
 
 const stripe = new Stripe(secret);
-const products = await stripe.products.search({ query: "metadata['ptitvestiaire']='subscription'" });
+const products = await stripe.products.search({ query: "metadata['ptitvestiaire']:'subscription'" });
 const product = products.data[0] ?? await stripe.products.create({
   name: 'PtitVestiaire Payant',
   description: 'Fonctionnalités illimitées et reconnaissance automatique des vêtements.',

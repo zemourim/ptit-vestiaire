@@ -30,12 +30,20 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/familles/$(familleId)).data.plan == 'payant';
     }
 
+    function activeChild(familleId, childName) {
+      return paid(familleId)
+        || get(/databases/$(database)/documents/familles/$(familleId)).data.enfants[0] == childName;
+    }
+
     match /familles/{familleId} {
       allow read: if member(familleId);
       allow create: if verified()
         && request.resource.data.proprietaireUserId == request.auth.uid
         && request.resource.data.plan == 'gratuit'
+        && request.resource.data.nom is string
+        && request.resource.data.enfants is list
         && request.resource.data.enfants.size() == 1
+        && request.resource.data.enfants[0] is string
         && request.resource.data.stripeCustomerId == null
         && request.resource.data.stripeSubscriptionId == null
         && request.resource.data.frequencePaiement == null
@@ -54,6 +62,8 @@ service cloud.firestore {
       // Le client ne peut jamais s'auto-attribuer un abonnement ni modifier les compteurs.
       allow update: if member(familleId)
         && request.resource.data.proprietaireUserId == resource.data.proprietaireUserId
+        && request.resource.data.enfants is list
+        && request.resource.data.enfants.size() >= 1
         && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
           'plan', 'stripeCustomerId', 'stripeSubscriptionId', 'frequencePaiement',
           'dateDebutAbonnement', 'dateProchainRenouvellement', 'nombreRappelsEnvoyes',
@@ -100,7 +110,15 @@ service cloud.firestore {
       allow create, delete: if false;
       allow update: if member(resource.data.familleId)
         && (!resource.data.keys().hasAny(['bloqueParPlan']) || resource.data.bloqueParPlan != true)
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['familleId', 'bloqueParPlan']);
+        && activeChild(resource.data.familleId, resource.data.fille)
+        && request.resource.data.familleId == resource.data.familleId
+        && request.resource.data.fille == resource.data.fille
+        && (request.resource.data.photoReference == null || request.resource.data.photoReference is string)
+        && !request.resource.data.keys().hasAny(['photos', 'photoReferences'])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'nom', 'nomNormalise', 'photoReference', 'actif', 'statutActuel',
+          'dernierMouvementId', 'dateDernierMouvement'
+        ]);
     }
 
     match /mouvements/{mouvementId} {
@@ -108,11 +126,27 @@ service cloud.firestore {
         && (paid(resource.data.familleId)
           || resource.data.date >= request.time - duration.value(30, 'd'));
       allow create: if member(request.resource.data.familleId)
+        && request.resource.data.keys().hasOnly([
+          'vetementId', 'familleId', 'fille', 'date', 'photoUrl',
+          'statut', 'dateRetour', 'origine'
+        ])
+        && exists(/databases/$(database)/documents/vetements/$(request.resource.data.vetementId))
+        && get(/databases/$(database)/documents/vetements/$(request.resource.data.vetementId)).data.familleId == request.resource.data.familleId
+        && (!get(/databases/$(database)/documents/vetements/$(request.resource.data.vetementId)).data.keys().hasAny(['bloqueParPlan'])
+          || get(/databases/$(database)/documents/vetements/$(request.resource.data.vetementId)).data.bloqueParPlan != true)
+        && activeChild(request.resource.data.familleId, request.resource.data.fille)
+        && (request.resource.data.photoUrl == null || request.resource.data.photoUrl is string)
+        && (request.resource.data.statut == 'sorti' || request.resource.data.statut == 'revenu')
+        && (request.resource.data.origine == 'photo' || request.resource.data.origine == 'bouton_rapide')
         && request.resource.data.date >= request.time - duration.value(5, 'm')
         && request.resource.data.date <= request.time + duration.value(5, 'm');
       allow update: if member(resource.data.familleId)
-        && request.resource.data.familleId == resource.data.familleId;
-      allow delete: if member(resource.data.familleId);
+        && activeChild(resource.data.familleId, resource.data.fille)
+        && request.resource.data.familleId == resource.data.familleId
+        && request.resource.data.dateRetour is timestamp
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['dateRetour']);
+      // Le nettoyage des mouvements expirés est exclusivement réalisé côté serveur.
+      allow delete: if false;
     }
 
     // Ancienne collection, conservée en lecture le temps de valider la migration.

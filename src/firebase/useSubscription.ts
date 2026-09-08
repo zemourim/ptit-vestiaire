@@ -10,7 +10,7 @@ export async function appelerFonction<TRequest, TResponse>(nom: string, data: TR
 export async function ouvrirCheckout(familleId: string, frequence: 'mensuel' | 'annuel') {
   const { url } = await appelerFonction<{ familleId: string; frequence: 'mensuel' | 'annuel'; returnUrl: string }, { url: string }>(
     'creerSessionCheckout',
-    { familleId, frequence, returnUrl: `${window.location.origin}/#reglages` }
+    { familleId, frequence, returnUrl: `${window.location.origin}/#dashboard` }
   );
   window.location.assign(url);
 }
