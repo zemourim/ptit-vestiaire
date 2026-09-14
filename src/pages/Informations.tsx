@@ -2,7 +2,7 @@ import { ArrowLeft, Heart, ShieldCheck } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { PiedDePage } from '../components/PiedDePage';
 
-export type InformationSlug = 'a-propos' | 'faq' | 'cgu' | 'cgv' | 'confidentialite' | 'cookies' | 'mentions-legales';
+export type InformationSlug = 'a-propos' | 'faq' | 'cgu' | 'cgv' | 'confidentialite' | 'mentions-legales';
 
 const publisherName = 'INOPIA GROUP';
 const publisherAddress = '60 rue François Ier, 75008 Paris, France';
@@ -31,7 +31,6 @@ export function Informations({ page }: { page: InformationSlug }) {
         {page === 'cgu' && <Cgu />}
         {page === 'cgv' && <Cgv />}
         {page === 'confidentialite' && <Confidentialite />}
-        {page === 'cookies' && <Cookies />}
         {page === 'mentions-legales' && <MentionsLegales />}
       </main>
       <PiedDePage />
@@ -111,15 +110,6 @@ function Confidentialite() {
     <Section title="Vos droits"><p>Vous pouvez demander l’accès, la rectification, l’effacement, la limitation ou la portabilité de vos données, et vous opposer aux traitements fondés sur l’intérêt légitime. Les représentants légaux peuvent exercer ces droits pour les données d’un enfant. Utilisez <ContactLink /> en indiquant l’adresse associée au compte. Une preuve d’identité peut être demandée uniquement en cas de doute raisonnable.</p><p>En l’absence de réponse satisfaisante, vous pouvez saisir la CNIL sur cnil.fr.</p></Section>
     <Section title="Sécurité"><p>L’accès nécessite une authentification et une adresse vérifiée. L’appartenance à chaque famille est contrôlée par les mécanismes de sécurité intégrés à la plateforme, indépendamment de l’interface affichée. Les photos sont compressées avant transfert et les secrets nécessaires à l’analyse automatisée ne sont pas exposés dans l’application. Aucun dispositif ne pouvant garantir un risque nul, utilisez un mot de passe unique et révoquez rapidement un membre qui ne doit plus accéder à la famille.</p></Section>
     <Section title="Vie privée des enfants"><p>PtitVestiaire s’adresse aux parents et responsables adultes, pas directement aux enfants. Ajoutez uniquement les informations nécessaires, évitez les visages et images intimes, informez l’enfant selon son âge et assurez-vous de disposer des autorisations nécessaires de l’autre parent.</p></Section>
-  </Page>;
-}
-
-function Cookies() {
-  return <Page eyebrow="Stockage local" title="Cookies et traceurs">
-    <p className="text-sm font-bold text-slate-500">Version du {lastUpdate}</p>
-    <Section title="Ce que PtitVestiaire utilise"><p>L’application utilise uniquement les mécanismes techniques indispensables à la connexion Firebase, à la sécurité de la session et au maintien de la famille active dans l’onglet du navigateur. Ces éléments ne servent ni à la publicité, ni au profilage, ni à la mesure d’audience commerciale.</p></Section>
-    <Section title="Consentement"><p>Les traceurs strictement nécessaires au service demandé sont exemptés de consentement préalable. PtitVestiaire n’affiche donc pas de bannière de consentement tant qu’aucun outil facultatif d’analyse, de publicité ou de suivi tiers n’est ajouté.</p></Section>
-    <Section title="Vos réglages"><p>Vous pouvez effacer les données du site depuis les paramètres de votre navigateur. Cela peut vous déconnecter ou réinitialiser la famille active. Cette page sera mise à jour avant l’ajout éventuel d’un traceur non essentiel.</p></Section>
   </Page>;
 }
 

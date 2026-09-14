@@ -83,7 +83,6 @@ export function Reglages({ userEmail, userId, famille, hasPasswordProvider, onCh
           <a href="#cgu" className="underline">Conditions d’utilisation</a>
           <a href="#cgv" className="underline">Conditions de vente</a>
           <a href="#confidentialite" className="underline">Confidentialité</a>
-          <a href="#cookies" className="underline">Cookies</a>
           <a href="#mentions-legales" className="underline">Mentions légales</a>
         </div>
       </section>

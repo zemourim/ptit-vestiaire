@@ -32,7 +32,7 @@ const tabs: Array<{ id: Tab; label: string; icon: typeof Shirt }> = [
   { id: 'reglages', label: 'Réglages', icon: Settings }
 ];
 
-const informationPages: InformationSlug[] = ['a-propos', 'faq', 'cgu', 'cgv', 'confidentialite', 'cookies', 'mentions-legales'];
+const informationPages: InformationSlug[] = ['a-propos', 'faq', 'cgu', 'cgv', 'confidentialite', 'mentions-legales'];
 const informationRoutes: InformationRoute[] = [...informationPages, 'contact'];
 
 export function App() {
