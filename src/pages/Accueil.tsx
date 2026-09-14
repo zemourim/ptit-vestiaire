@@ -125,9 +125,6 @@ export function Accueil() {
         </section>
       </main>
 
-      <div className="border-t border-slate-200 bg-white/80 px-4 pt-6 text-center text-sm font-bold text-slate-600">
-        Besoin d’aide ? <a className="font-black text-cyan-800 underline" href="#contact">Utiliser le formulaire de contact</a>
-      </div>
       <PiedDePage />
     </div>
   );
