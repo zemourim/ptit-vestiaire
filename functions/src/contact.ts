@@ -5,7 +5,7 @@ import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { db, stringValue } from './server.js';
 
 const resendApiKey = defineSecret('RESEND_API_KEY');
-const emailFrom = defineString('EMAIL_FROM');
+const emailFrom = defineString('EMAIL_FROM', { default: 'noreply@resend.dev' });
 const contactRecipient = defineSecret('CONTACT_RECIPIENT');
 
 type ContactRequest = {

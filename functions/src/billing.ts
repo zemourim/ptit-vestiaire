@@ -13,7 +13,7 @@ const stripeMonthlyPrice = defineSecret('STRIPE_PRICE_MONTHLY');
 const stripeAnnualPrice = defineSecret('STRIPE_PRICE_ANNUAL');
 const resendApiKey = defineSecret('RESEND_API_KEY');
 const appPublicUrl = defineString('APP_PUBLIC_URL', { default: 'https://ptit-vestiaire-git-multi-familles-ptit-vestiaire.vercel.app' });
-const emailFrom = defineString('EMAIL_FROM');
+const emailFrom = defineString('EMAIL_FROM', { default: 'noreply@resend.dev' });
 
 const stripeSecrets = [stripeSecretKey, stripeMonthlyPrice, stripeAnnualPrice];
 const emailSecrets = [resendApiKey];
