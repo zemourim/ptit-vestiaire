@@ -33,7 +33,7 @@ export const envoyerMessageContact = onCall<ContactRequest>({ secrets: [resendAp
       throw new HttpsError(‘invalid-argument’, ‘Vérifie les informations du formulaire.’);
     }
 
-    const ip = request.rawRequest.ip || request.rawRequest.header(‘x-forwarded-for’) || ‘inconnue’;
+    const ip = (request.raw?.headers?.get?.(‘x-forwarded-for’) as string | undefined) || ‘inconnue’;
     const day = new Date().toISOString().slice(0, 10);
     const rateId = createHash(‘sha256’).update(`${day}:${ip}`).digest(‘hex’);
     const rateRef = db.doc(`contactRateLimits/${rateId}`);
