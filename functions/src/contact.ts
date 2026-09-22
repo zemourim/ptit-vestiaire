@@ -33,6 +33,13 @@ export const envoyerMessageContact = onCall<ContactRequest>({ secrets: [resendAp
       throw new HttpsError(‘invalid-argument’, ‘Vérifie les informations du formulaire.’);
     }
 
+    const apiKey = resendApiKey.value();
+    const recipient = contactRecipient.value();
+    const from = emailFrom.value();
+
+    if (!apiKey) throw new HttpsError(‘internal’, ‘API key not configured’);
+    if (!recipient) throw new HttpsError(‘internal’, ‘Recipient not configured’);
+
     const ip = (request.raw?.headers?.get?.(‘x-forwarded-for’) as string | undefined) || ‘inconnue’;
     const day = new Date().toISOString().slice(0, 10);
     const rateId = createHash(‘sha256’).update(`${day}:${ip}`).digest(‘hex’);
@@ -43,10 +50,6 @@ export const envoyerMessageContact = onCall<ContactRequest>({ secrets: [resendAp
       if (count >= 5) throw new HttpsError(‘resource-exhausted’, ‘Trop de messages ont été envoyés. Réessaie demain.’);
       transaction.set(rateRef, { count: count + 1, date: day, derniereTentative: Timestamp.now() }, { merge: true });
     });
-
-    const apiKey = resendApiKey.value();
-    const recipient = contactRecipient.value();
-    const from = emailFrom.value();
 
     const response = await fetch(‘https://api.resend.com/emails’, {
       method: ‘POST’,
