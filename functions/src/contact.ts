@@ -1,12 +1,8 @@
-import { createHash } from 'node:crypto';
-import { Timestamp } from 'firebase-admin/firestore';
-import { defineSecret, defineString } from 'firebase-functions/params';
-import { HttpsError, onCall } from 'firebase-functions/v2/https';
-import { db, stringValue } from './server.js';
-
-const resendApiKey = defineSecret('RESEND_API_KEY');
-const emailFrom = defineString('EMAIL_FROM', { default: 'noreply@resend.dev' });
-const contactRecipient = defineSecret('CONTACT_RECIPIENT');
+import { createHash } from ‘node:crypto’;
+import { Timestamp } from ‘firebase-admin/firestore’;
+import { HttpsError, onCall } from ‘firebase-functions/v2/https’;
+import { db, stringValue } from ‘./server.js’;
+import { getSecret } from ‘./secrets.js’;
 
 type ContactRequest = {
   nom?: unknown;
@@ -17,10 +13,10 @@ type ContactRequest = {
 };
 
 function escapeHtml(value: string) {
-  return value.replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[character] ?? character);
+  return value.replace(/[&<>’"]/g, (character) => ({ ‘&’: ‘&amp;’, ‘<’: ‘&lt;’, ‘>’: ‘&gt;’, "’": ‘&#39;’, ‘"’: ‘&quot;’ })[character] ?? character);
 }
 
-export const envoyerMessageContact = onCall<ContactRequest>({ secrets: [resendApiKey, contactRecipient] }, async (request) => {
+export const envoyerMessageContact = onCall<ContactRequest>(async (request) => {
   try {
     // Champ invisible rempli par certains robots : on répond sans envoyer de message.
     if (stringValue(request.data.website, 200)) return { ok: true };
@@ -33,12 +29,12 @@ export const envoyerMessageContact = onCall<ContactRequest>({ secrets: [resendAp
       throw new HttpsError(‘invalid-argument’, ‘Vérifie les informations du formulaire.’);
     }
 
-    const apiKey = resendApiKey.value();
-    const recipient = contactRecipient.value();
-    const from = emailFrom.value();
+    const apiKey = await getSecret(‘RESEND_API_KEY’);
+    const recipient = await getSecret(‘CONTACT_RECIPIENT’);
+    const from = process.env.EMAIL_FROM || ‘noreply@resend.dev’;
 
-    if (!apiKey) throw new HttpsError(‘internal’, ‘API key not configured’);
-    if (!recipient) throw new HttpsError(‘internal’, ‘Recipient not configured’);
+    if (!apiKey) throw new HttpsError(‘internal’, ‘RESEND_API_KEY not found’);
+    if (!recipient) throw new HttpsError(‘internal’, ‘CONTACT_RECIPIENT not found’);
 
     const ip = (request.raw?.headers?.get?.(‘x-forwarded-for’) as string | undefined) || ‘inconnue’;
     const day = new Date().toISOString().slice(0, 10);
