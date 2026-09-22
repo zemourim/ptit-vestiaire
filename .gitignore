@@ -12,3 +12,4 @@ storage-debug.log
 functions/node_modules/
 functions/lib/
 Site_Sanaa/
+.vercel
