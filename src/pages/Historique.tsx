@@ -1,14 +1,14 @@
-import { Camera, MousePointerClick, ChevronLeft, ChevronRight } from ‘lucide-react’;
-import { useMemo, useState } from ‘react’;
-import { HistoriqueVetement } from ‘../components/HistoriqueVetement’;
-import { FILLES, filleStyles } from ‘../lib/constants’;
-import { formatDate, formatDateLong } from ‘../lib/dates’;
-import { useJournalMouvements } from ‘../firebase/useMouvements’;
-import { useVetements } from ‘../firebase/useVetements’;
-import type { Fille, Mouvement, Vetement } from ‘../types’;
+import { Camera, MousePointerClick, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { HistoriqueVetement } from '../components/HistoriqueVetement';
+import { FILLES, filleStyles } from '../lib/constants';
+import { formatDate, formatDateLong } from '../lib/dates';
+import { useJournalMouvements } from '../firebase/useMouvements';
+import { useVetements } from '../firebase/useVetements';
+import type { Fille, Mouvement, Vetement } from '../types';
 
-type Filter = Fille | ‘Toutes’;
-type DateFilter = ‘today’ | ‘week’ | ‘month’ | ‘all’;
+type Filter = Fille | 'Toutes';
+type DateFilter = 'today' | 'week' | 'month' | 'all';
 
 const ITEMS_PER_PAGE = 15;
 
@@ -22,14 +22,14 @@ function getDayDifference(date: Date): number {
 
 function getDateFilterLabel(dateFilter: DateFilter): string {
   switch (dateFilter) {
-    case ‘today’:
-      return ‘Aujourd\’hui’;
-    case ‘week’:
-      return ‘Cette semaine’;
-    case ‘month’:
-      return ‘Ce mois’;
-    case ‘all’:
-      return ‘Tous les mouvements’;
+    case 'today':
+      return 'Aujourd\'hui';
+    case 'week':
+      return 'Cette semaine';
+    case 'month':
+      return 'Ce mois';
+    case 'all':
+      return 'Tous les mouvements';
   }
 }
 
@@ -43,13 +43,13 @@ function filterByDate(mouvements: Mouvement[], dateFilter: DateFilter): Mouvemen
     const daysDiff = getDayDifference(movementDate);
 
     switch (dateFilter) {
-      case ‘today’:
+      case 'today':
         return daysDiff === 0;
-      case ‘week’:
+      case 'week':
         return daysDiff >= 0 && daysDiff < 7;
-      case ‘month’:
+      case 'month':
         return daysDiff >= 0 && daysDiff < 30;
-      case ‘all’:
+      case 'all':
         return true;
     }
   });
@@ -64,9 +64,9 @@ function groupByDay(mouvements: Mouvement[]): Map<string, Mouvement[]> {
 
     let key: string;
     if (dayDiff === 0) {
-      key = ‘Aujourd\’hui’;
+      key = 'Aujourd\'hui';
     } else if (dayDiff === 1) {
-      key = ‘Hier’;
+      key = 'Hier';
     } else if (dayDiff < 7) {
       key = `Il y a ${dayDiff} jours`;
     } else {
@@ -83,9 +83,9 @@ function groupByDay(mouvements: Mouvement[]): Map<string, Mouvement[]> {
 }
 
 export function Historique() {
-  const [filleFilter, setFilleFilter] = useState<Filter>(‘Toutes’);
-  const [dateFilter, setDateFilter] = useState<DateFilter>(‘all’);
-  const [searchTerm, setSearchTerm] = useState(‘’);
+  const [filleFilter, setFilleFilter] = useState<Filter>('Toutes');
+  const [dateFilter, setDateFilter] = useState<DateFilter>('all');
+  const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
   const { mouvements, loading, error } = useJournalMouvements(filleFilter);
   const { vetements } = useVetements();
@@ -128,12 +128,12 @@ export function Historique() {
       <div>
         <p className="text-sm font-black uppercase tracking-[0.22em] text-slate-500">Historique</p>
         <h2 className="mt-1 text-3xl font-black">Tous les mouvements</h2>
-        <p className="mt-1 font-bold text-slate-500">{getDateFilterLabel(dateFilter)} du plus récent au plus ancien.</p>
+        <p className="mt-1 font-bold text-slate-500">{getDateFilterLabel(dateFilter)} du plus recent au plus ancien.</p>
       </div>
 
       {/* Filtre par fille */}
       <div className="flex gap-2 overflow-x-auto pb-1">
-        {([‘Toutes’, ...FILLES] as Filter[]).map((item) => (
+        {(['Toutes', ...FILLES] as Filter[]).map((item) => (
           <button
             key={item}
             type="button"
@@ -141,7 +141,7 @@ export function Historique() {
               setFilleFilter(item);
               setCurrentPage(0);
             }}
-            className={`shrink-0 rounded-full px-4 py-2 font-black ${filleFilter === item ? ‘bg-slate-950 text-white’ : ‘bg-white text-slate-600’}`}
+            className={`shrink-0 rounded-full px-4 py-2 font-black ${filleFilter === item ? 'bg-slate-950 text-white' : 'bg-white text-slate-600'}`}
           >
             {item}
           </button>
@@ -150,7 +150,7 @@ export function Historique() {
 
       {/* Filtre par date */}
       <div className="flex gap-2 overflow-x-auto pb-1">
-        {([‘today’, ‘week’, ‘month’, ‘all’] as DateFilter[]).map((item) => (
+        {(['today', 'week', 'month', 'all'] as DateFilter[]).map((item) => (
           <button
             key={item}
             type="button"
@@ -159,16 +159,16 @@ export function Historique() {
               setCurrentPage(0);
             }}
             className={`shrink-0 rounded-full px-4 py-2 text-sm font-bold whitespace-nowrap ${
-              dateFilter === item ? ‘bg-cyan-600 text-white’ : ‘bg-cyan-100 text-cyan-700’
+              dateFilter === item ? 'bg-cyan-600 text-white' : 'bg-cyan-100 text-cyan-700'
             }`}
           >
-            {item === ‘today’
-              ? ‘Aujourd\’hui’
-              : item === ‘week’
-                ? ‘Cette semaine’
-                : item === ‘month’
-                  ? ‘Ce mois’
-                  : ‘Tous’}
+            {item === 'today'
+              ? 'Aujourd\'hui'
+              : item === 'week'
+                ? 'Cette semaine'
+                : item === 'month'
+                  ? 'Ce mois'
+                  : 'Tous'}
           </button>
         ))}
       </div>
@@ -177,7 +177,7 @@ export function Historique() {
       <div>
         <input
           type="text"
-          placeholder="Rechercher un vêtement..."
+          placeholder="Rechercher un vetement..."
           value={searchTerm}
           onChange={(e) => {
             setSearchTerm(e.target.value);
@@ -188,9 +188,9 @@ export function Historique() {
       </div>
 
       {error && <p className="rounded-2xl bg-rose-100 p-4 text-sm font-bold text-rose-700">{error}</p>}
-      {loading && <p className="rounded-2xl bg-white p-4 font-bold text-slate-600">Chargement de l’historique...</p>}
+      {loading && <p className="rounded-2xl bg-white p-4 font-bold text-slate-600">Chargement de l\'historique...</p>}
 
-      {/* Mouvements groupés par jour */}
+      {/* Mouvements groupes par jour */}
       <div className="space-y-6">
         {paginatedDays.map((day) => {
           const dayMovements = groupedByDay.get(day) || [];
@@ -216,19 +216,19 @@ export function Historique() {
                           </div>
                         )}
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-lg font-black capitalize">{vetement?.nom ?? ‘Vêtement supprimé’}</p>
+                          <p className="truncate text-lg font-black capitalize">{vetement?.nom ?? 'Vetement supprime'}</p>
                           <p className={`text-sm font-bold ${filleStyles[mouvement.fille].text}`}>{mouvement.fille}</p>
                           <p className="mt-1 inline-flex items-center gap-1 text-sm font-bold text-slate-500">
-                            {mouvement.origine === ‘photo’ ? <Camera size={14} /> : <MousePointerClick size={14} />}
+                            {mouvement.origine === 'photo' ? <Camera size={14} /> : <MousePointerClick size={14} />}
                             {formatDate(mouvement.date)}
                           </p>
                         </div>
                         <span
                           className={`shrink-0 rounded-full px-3 py-1 text-sm font-bold ${
-                            mouvement.statut === ‘sorti’ ? ‘bg-slate-200 text-slate-700’ : ‘bg-emerald-100 text-emerald-700’
+                            mouvement.statut === 'sorti' ? 'bg-slate-200 text-slate-700' : 'bg-emerald-100 text-emerald-700'
                           }`}
                         >
-                          {mouvement.statut === ‘sorti’ ? ‘Sorti’ : ‘Rentré’}
+                          {mouvement.statut === 'sorti' ? 'Sorti' : 'Rentre'}
                         </span>
                       </button>
                     </li>
@@ -242,7 +242,7 @@ export function Historique() {
 
       {!loading && filteredBySearch.length === 0 && (
         <p className="rounded-3xl bg-white p-6 text-center font-bold text-slate-500">
-          {searchTerm ? ‘Aucun vêtement ne correspond à votre recherche.’ : ‘Aucun mouvement enregistré.’}
+          {searchTerm ? 'Aucun vetement ne correspond a votre recherche.' : 'Aucun mouvement enregistre.'}
         </p>
       )}
 
@@ -256,7 +256,7 @@ export function Historique() {
             className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 font-bold text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-200"
           >
             <ChevronLeft size={20} />
-            Précédent
+            Precedent
           </button>
           <span className="font-bold text-slate-600">
             Page {currentPage + 1} sur {totalPages}
