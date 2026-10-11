@@ -84,7 +84,7 @@ function groupByDay(mouvements: Mouvement[]): Map<string, Mouvement[]> {
 
 export function Historique() {
   const [filleFilter, setFilleFilter] = useState<Filter>('Toutes');
-  const [dateFilter, setDateFilter] = useState<DateFilter>('all');
+  const [dateFilter, setDateFilter] = useState<DateFilter>('week');
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
   const { mouvements, loading, error } = useJournalMouvements(filleFilter);
@@ -141,7 +141,7 @@ export function Historique() {
               setFilleFilter(item);
               setCurrentPage(0);
             }}
-            className={`shrink-0 rounded-full px-4 py-2 font-black ${filleFilter === item ? 'bg-slate-950 text-white' : 'bg-white text-slate-600'}`}
+            className={`shrink-0 rounded-full px-3 sm:px-4 py-2 text-sm sm:text-base font-black transition-colors ${filleFilter === item ? 'bg-slate-950 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
           >
             {item}
           </button>
@@ -158,17 +158,28 @@ export function Historique() {
               setDateFilter(item);
               setCurrentPage(0);
             }}
-            className={`shrink-0 rounded-full px-4 py-2 text-sm font-bold whitespace-nowrap ${
-              dateFilter === item ? 'bg-cyan-600 text-white' : 'bg-cyan-100 text-cyan-700'
+            className={`shrink-0 rounded-full px-3 py-2 text-xs sm:text-sm font-bold whitespace-nowrap transition-colors ${
+              dateFilter === item ? 'bg-cyan-600 text-white' : 'bg-cyan-100 text-cyan-700 hover:bg-cyan-200'
             }`}
           >
-            {item === 'today'
-              ? 'Aujourd\'hui'
-              : item === 'week'
-                ? 'Cette semaine'
-                : item === 'month'
-                  ? 'Ce mois'
-                  : 'Tous'}
+            <span className="inline sm:hidden">
+              {item === 'today'
+                ? 'Auj.'
+                : item === 'week'
+                  ? 'Sem.'
+                  : item === 'month'
+                    ? 'Mois'
+                    : 'Tous'}
+            </span>
+            <span className="hidden sm:inline">
+              {item === 'today'
+                ? 'Aujourd\'hui'
+                : item === 'week'
+                  ? 'Cette semaine'
+                  : item === 'month'
+                    ? 'Ce mois'
+                    : 'Tous'}
+            </span>
           </button>
         ))}
       </div>
