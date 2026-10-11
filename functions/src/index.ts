@@ -31,7 +31,7 @@ export const analyzeVetementsV2 = onCall<AnalyzeRequest>(
       const client = new Anthropic({ apiKey: apiKeyValue });
 
       const response = await client.messages.create({
-        model: 'claude-3-haiku-20240307',
+        model: 'claude-3-5-sonnet-20241022',
         max_tokens: 1024,
         messages: [
           {
