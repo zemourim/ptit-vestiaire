@@ -9,6 +9,18 @@ type AnalyzeRequest = {
 
 const anthropicApiKey = defineSecret('ANTHROPIC_API_KEY');
 
+export const testApiKey = onCall(
+  { secrets: [anthropicApiKey] },
+  async () => {
+    const key = anthropicApiKey.value();
+    return {
+      keyLength: key?.length || 0,
+      keyPrefix: key?.substring(0, 10) || 'MISSING',
+      hasSk: key?.startsWith('sk-') || false,
+    };
+  }
+);
+
 export const analyzeVetementsV2 = onCall<AnalyzeRequest>(
   { secrets: [anthropicApiKey] },
   async (request) => {
@@ -31,7 +43,7 @@ export const analyzeVetementsV2 = onCall<AnalyzeRequest>(
       const client = new Anthropic({ apiKey: apiKeyValue });
 
       const response = await client.messages.create({
-        model: 'claude-opus-4-1-20250805',
+        model: 'claude-3-5-sonnet-20241022',
         max_tokens: 1024,
         messages: [
           {
