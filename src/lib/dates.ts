@@ -9,6 +9,15 @@ export function formatDate(timestamp: Timestamp) {
   });
 }
 
+export function formatDateLong(date: Date) {
+  return date.toLocaleDateString('fr-FR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
+}
+
 export function daysSince(timestamp: Timestamp) {
   const start = timestamp.toDate().getTime();
   const diff = Date.now() - start;
