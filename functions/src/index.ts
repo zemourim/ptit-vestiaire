@@ -12,38 +12,24 @@ const anthropicApiKey = defineSecret('ANTHROPIC_API_KEY');
 export const analyzeVetementsV2 = onCall<AnalyzeRequest>(
   { secrets: [anthropicApiKey] },
   async (request) => {
-    console.log('=== analyzeVetementsV2 called ===');
-    console.log('Auth UID:', request.auth?.uid);
-    console.log('Has auth:', !!request.auth);
-
     try {
       if (!request.auth) {
-        console.log('ERROR: No authentication');
-        throw new HttpsError('unauthenticated', 'Not authenticated');
+        throw new HttpsError('unauthenticated', 'User must be authenticated');
       }
 
       const { imageBase64, mimeType } = request.data;
-      console.log('Has imageBase64:', !!imageBase64, 'Length:', imageBase64?.length);
-      console.log('mimeType:', mimeType);
 
       if (!imageBase64 || !mimeType) {
-        console.log('ERROR: Missing imageBase64 or mimeType');
-        throw new HttpsError('invalid-argument', `Missing imageBase64=${!!imageBase64} or mimeType=${!!mimeType}`);
+        throw new HttpsError('invalid-argument', 'imageBase64 and mimeType are required');
       }
 
-      console.log('Getting API key...');
-      const apiKey = anthropicApiKey.value();
-      console.log('API key available:', !!apiKey, 'Length:', apiKey?.length);
-
-      if (!apiKey) {
-        throw new Error('ANTHROPIC_API_KEY is not set');
+      const apiKeyValue = anthropicApiKey.value();
+      if (!apiKeyValue) {
+        throw new Error('ANTHROPIC_API_KEY secret not available');
       }
 
-      console.log('Creating Anthropic client...');
-      const client = new Anthropic({ apiKey });
-      console.log('Client created');
+      const client = new Anthropic({ apiKey: apiKeyValue });
 
-      console.log('Calling Anthropic API...');
       const response = await client.messages.create({
         model: 'claude-3-5-haiku-20241022',
         max_tokens: 1024,
@@ -61,43 +47,35 @@ export const analyzeVetementsV2 = onCall<AnalyzeRequest>(
               },
               {
                 type: 'text',
-                text: 'Analyze this image and list all clothing items you see. Return ONLY a JSON array of strings with item names, nothing else. Example: ["blue jeans", "white shirt", "black shoes"]. If no clothing items are visible, return an empty array [].',
+                text: 'List all visible clothing items in JSON array format only. Example: ["shirt", "pants"]. Return empty array [] if no clothes visible.',
               },
             ],
           },
         ],
       });
 
-      console.log('Got response from Anthropic');
-      const content = response.content[0];
-      if (content.type !== 'text') {
-        throw new Error('Unexpected response type from Anthropic');
+      const textContent = response.content.find((c) => c.type === 'text');
+      if (!textContent || textContent.type !== 'text') {
+        throw new Error('No text response from Anthropic');
       }
 
-      console.log('Parsing response:', content.text.substring(0, 100));
       let vetements: string[] = [];
       try {
-        vetements = JSON.parse(content.text);
-        if (!Array.isArray(vetements)) {
-          vetements = [];
+        const parsed = JSON.parse(textContent.text);
+        if (Array.isArray(parsed)) {
+          vetements = parsed.filter((item): item is string => typeof item === 'string').map((s) => s.toLowerCase());
         }
-        vetements = vetements.filter((item) => typeof item === 'string').map((item) => item.toLowerCase());
-      } catch (parseError) {
-        console.warn('Failed to parse response as JSON:', content.text);
+      } catch {
         vetements = [];
       }
 
-      console.log('Returning vetements:', vetements);
       return { vetements };
     } catch (error) {
-      console.error('=== ERROR in analyzeVetementsV2 ===');
-      console.error('Error type:', error?.constructor?.name);
-      console.error('Error message:', error instanceof Error ? error.message : String(error));
-      console.error('Full error:', error);
-
-      if (error instanceof HttpsError) throw error;
-      const message = error instanceof Error ? error.message : String(error);
-      throw new HttpsError('internal', message);
+      if (error instanceof HttpsError) {
+        throw error;
+      }
+      const msg = error instanceof Error ? error.message : String(error);
+      throw new HttpsError('internal', msg);
     }
   }
 );
