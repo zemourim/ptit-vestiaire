@@ -9,18 +9,6 @@ type AnalyzeRequest = {
 
 const anthropicApiKey = defineSecret('ANTHROPIC_API_KEY');
 
-export const testApiKey = onCall(
-  { secrets: [anthropicApiKey] },
-  async () => {
-    const key = anthropicApiKey.value();
-    return {
-      keyLength: key?.length || 0,
-      keyPrefix: key?.substring(0, 10) || 'MISSING',
-      hasSk: key?.startsWith('sk-') || false,
-    };
-  }
-);
-
 export const analyzeVetementsV2 = onCall<AnalyzeRequest>(
   { secrets: [anthropicApiKey] },
   async (request) => {
